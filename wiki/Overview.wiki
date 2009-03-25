@@ -1,0 +1,81 @@
+#summary A few lines of code describing the whole library
+#labels Featured,Phase-Implementation
+
+= Login =
+
+{{{
+Net.dispatcher.addEventListener(NetEvent.STATUS, statusHandler);
+Net.login(hostInput.text, loginInput.text, passwordInput.text);
+
+function statusHandler(event:NetEvent):void
+{
+    if (event.status == NetStatus.LOGGED_IN)
+    {
+        // we're in
+    }
+    else if (event.status == NetStatus.RELAX && event.error)
+    {
+        // login failed - ex. password is incorrect or server is not available
+    }
+}
+}}}
+
+= XIMSS Synchronous Requests =
+
+{{{
+Net.ximss(<folderRead folder={Model.instance.folder.name} 
+    uid={mail.uid} totalSizeLimit={10 * 1024 * 1024}/>, dataCallBack, responseCallBack);
+    
+private function dataCallBack(xml:XML):void
+{
+    mail.update(xml);
+}
+  
+private function responseCallBack(object:Object):void
+{
+    var text:String = getErrorText(object); 
+    if (text)
+    {
+        mail.status = Mail.PREVIEW;
+        mail.errors.addItem(new Error(text));
+    }
+    else
+    {
+        mail.status = Mail.VIEW;
+    }
+}
+}}}
+
+= XIMSS Asynchronous Requests =
+
+{{{
+Net.dispatcher.addEventListener("ximss-readIM", readIMHandler);
+  
+function readIMHandler(event:XIMSSAsyncEvent):void
+{
+    trace("Incoming IM: " + event.xml.toXMLString());
+}
+}}}
+
+= Connection status =
+
+{{{
+trace(Net.status); // relax, loggingIn or loggedIn
+
+Net.dispatcher.addEventListener(NetEvent.STATUS, statusHandler);
+
+function statusHandler(event:NetEvent):void
+{
+    if (event.status == NetStatus.LOGGED_IN)
+    {
+        // we're in, ximss() can be used
+    }
+    else if (event.status == NetStatus.RELAX && event.error)
+    {
+        if (event.error) 
+            // connection has broke or login failed
+        else
+            // normal connection close
+    }
+}
+}}}
