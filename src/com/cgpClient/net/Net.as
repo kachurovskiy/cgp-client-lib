@@ -298,7 +298,7 @@ public class Net
 	 *  <p><strong>Example: reading mail body</strong>
 	 *  <listing>
 	 *  Net.ximss(&lt;folderRead folder={Model.instance.folder.name} 
-	 *      uid={mail.uid} totalSizeLimit={10 * 1024 * 1024}/&gt;, dataCallBack, responseCallBack);
+	 *      uid={mail.uid} totalSizeLimit={10485760}/&gt;, dataCallBack, responseCallBack);
 	 *   
 	 *  private function dataCallBack(xml:XML):void
 	 *  {
