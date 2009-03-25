@@ -1,0 +1,20 @@
+<project name="COnline" basedir="../">
+
+	<!-- Properties that are common for all machines -->
+	<property file="build/all.properties"/>
+	
+	<target name="asdoc" description="Generate ASDoc for library">
+		
+		<java jar="${FLEX_HOME}/lib/asdoc.jar" fork="true" failonerror="true" 
+			maxmemory="100m" dir="${FLEX_HOME}/frameworks">
+    		<arg value="-output=${basedir}/asdoc"/>
+            <arg value="-warnings=true"/>
+			<arg value="-doc-sources=${basedir}/src"/>
+            <arg value="-source-path+=${basedir}/src"/>
+            <arg value="-library-path+=${basedir}/libs"/>
+			<arg value="-window-title='Library ASDoc'"/>
+        </java>
+		
+	</target>
+	
+</project>
