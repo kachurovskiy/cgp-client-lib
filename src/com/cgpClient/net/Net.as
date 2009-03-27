@@ -1,9 +1,6 @@
 package com.cgpClient.net
 {
 
-import flash.events.DataEvent;
-import flash.events.ErrorEvent;
-import flash.events.Event;
 import flash.events.EventDispatcher;
 
 /**
@@ -96,6 +93,7 @@ public class Net
 			cachedXIMSS = [];
 		}
 		
+		var oldStatus:String = _status;
 		_status = value;
 
 		if (_status == NetStatus.LOGGED_IN) // send all cached requests
@@ -109,7 +107,7 @@ public class Net
 			cachedXIMSS = [];
 		}
 		
-		dispatcher.dispatchEvent(new NetEvent(NetEvent.STATUS, _status, statusError));
+		dispatcher.dispatchEvent(new NetEvent(NetEvent.STATUS, oldStatus, _status, statusError));
 		statusError = null;
 	}
 
@@ -128,18 +126,16 @@ public class Net
 	{
 		if (_channel)
 		{
-			_channel.removeEventListener("statusChange", channel_statusChangeHandler);
-			_channel.removeEventListener(DataEvent.DATA, channel_dataHandler);
-			_channel.removeEventListener(ErrorEvent.ERROR, channel_errorHandler);
+			_channel.removeEventListener(ChannelEvent.STATUS, channel_statusHandler);
+			_channel.removeEventListener(ChannelEvent.DATA, channel_dataHandler);
 		}
 		
 		_channel = value;
 		
 		if (_channel)
 		{
-			_channel.addEventListener("statusChange", channel_statusChangeHandler);
-			_channel.addEventListener(DataEvent.DATA, channel_dataHandler);
-			_channel.addEventListener(ErrorEvent.ERROR, channel_errorHandler);
+			_channel.addEventListener(ChannelEvent.STATUS, channel_statusHandler);
+			_channel.addEventListener(ChannelEvent.DATA, channel_dataHandler);
 		}
 	}
 
@@ -388,28 +384,39 @@ public class Net
 		}
 	}
 	
-	private static function channel_statusChangeHandler(event:Event):void
+	private static function channel_statusHandler(event:ChannelEvent):void
 	{
-		if (channel.status == ChannelStatus.LOGGED_IN)
+		var newStatus:String = event.newStatus;
+		if (newStatus == ChannelStatus.LOGGED_IN ||
+			newStatus == ChannelStatus.LOGGING_IN ||
+			(newStatus == ChannelStatus.RELAX &&
+			event.oldStatus == ChannelStatus.LOGGED_IN))
 		{
-			setStatus(NetStatus.LOGGED_IN); 
+			setStatus(newStatus);
+			if (newStatus == ChannelStatus.RELAX) // user logged out
+				channel = null;
 		}
-		else if (channel.status == ChannelStatus.LOGGING_IN)
+		// login error - connection / login-password problem
+		else if (newStatus == ChannelStatus.RELAX && event.text) 
 		{
-			setStatus(NetStatus.LOGGING_IN); 
-		}
-		else if (channel.status == ChannelStatus.RELAX)
-		{
-			// do not eat this status - ex. when we try socket on port1, then
-			// socket on port2, then binding - app status shouldn't change
-			// loggingIn - relax - loggingIn - relax - loggingIn - loggedIn.
-			// It should just do loggingIn - loggedIn.
+			// socket connection can be disabled by firewall of smth,
+			// jump to HTTP Binding.
+			if (event.oldStatus == ChannelStatus.CONNECTING)
+				setNextChannel();
+			
+			// if there nothing left to try or problem is not in connection establishing
+			if (event.oldStatus != ChannelStatus.CONNECTING || !_channel)
+			{
+				channel = null;
+				statusError = new Error(event.text);
+				setStatus(NetStatus.RELAX);
+			}
 		}
 	}
 	
-	private static function channel_dataHandler(event:DataEvent):void
+	private static function channel_dataHandler(event:ChannelEvent):void
 	{
-		var xml:XML = new XML(event.data);
+		var xml:XML = new XML(event.text);
 		var name:String = xml.name().toString();
 		if (xml.hasOwnProperty("@id")) // sync
 		{
@@ -437,22 +444,6 @@ public class Net
 		{
 			var ximssEvent:XIMSSAsyncEvent = new XIMSSAsyncEvent("ximss-" + name, xml);
 			dispatcher.dispatchEvent(ximssEvent);
-		}
-	}
-	
-	private static function channel_errorHandler(event:ErrorEvent):void
-	{
-		// socket connection can be disabled by firewall of smth,
-		// jump to HTTP Binding.
-		if (_channel.status == ChannelStatus.CONNECTING || 
-			_channel.status == ChannelStatus.RELAX)
-		{
-			setNextChannel();
-			if (!_channel)
-			{
-				statusError = new Error(event.text);
-				setStatus(NetStatus.RELAX);
-			}
 		}
 	}
 	

@@ -1,12 +1,11 @@
 package com.cgpClient.net
 {
-import flash.events.Event;
 import flash.events.EventDispatcher;
 import flash.utils.getQualifiedClassName;
 
-[Event(name="error", type="flash.events.ErrorEvent")]
-[Event(name="data", type="flash.events.DataEvent")]
-[Event(name="login", type="com.cgpClient.net.ChannelEvent")]
+[Event(name="data", type="com.cgpClient.net.ChannelEvent")]
+[Event(name="error", type="com.cgpClient.net.ChannelEvent")]
+[Event(name="status", type="com.cgpClient.net.ChannelEvent")]
 /**
  *  @private
  */
@@ -24,6 +23,7 @@ public class Channel extends EventDispatcher
 	//--------------------------------------
 
 	protected var _status:String = ChannelStatus.RELAX;
+	protected var statusError:String;
 	
 	[Bindable("statusChange")]
 	/**
@@ -40,8 +40,10 @@ public class Channel extends EventDispatcher
 		if (_status == value)
 			return;
 		
+		var oldStatus:String = _status;
 		_status = value;
-		dispatchEvent(new Event("statusChange"));
+		dispatchEvent(new ChannelEvent(ChannelEvent.STATUS, statusError, oldStatus, _status));
+		statusError = null;
 	}
 	
 	//--------------------------------------

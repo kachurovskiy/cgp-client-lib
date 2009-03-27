@@ -53,6 +53,8 @@ public class HTTPBinding extends Channel
 	private var password:String;
 	private var sessionId:String;
 	
+	private var bying:Boolean = false;
+	
 	//--------------------------------------------------------------------------
 	//
 	//  Constructor
@@ -104,7 +106,7 @@ public class HTTPBinding extends Channel
 		}
 		try
 		{
-			var urlRequest:URLRequest = getURLRequest(<listFeatures id="connecting"/>); 
+			var urlRequest:URLRequest = getURLRequest("<listFeatures id='connecting'/>"); 
 			trace("C: connectingLoader: " + urlRequest.url + " | " + urlRequest.data);
 			connectingLoader.load(urlRequest);
 		}
@@ -137,7 +139,18 @@ public class HTTPBinding extends Channel
 		urlLoaderWorking = true;
 		
 		prepareLoader();
-		var urlRequest:URLRequest = getURLRequest(XML(urlLoaderQueue.shift()));
+		var string:String = "";
+		for each (var xmlItem:XML in urlLoaderQueue)
+		{
+			string += xmlItem.toXMLString();
+			if (xmlItem.name() == "bye")
+			{
+				bying = true;
+				break;
+			}
+		}
+		urlLoaderQueue = [];
+		var urlRequest:URLRequest = getURLRequest(string);
 		trace("C: urlLoader: " + urlRequest.url + " | " + urlRequest.data);
 		urlLoader.load(urlRequest);
 	}
@@ -200,19 +213,18 @@ public class HTTPBinding extends Channel
 		urlLoader.load(urlRequest);
 	}
 	
-	private function getURLRequest(xml:XML):URLRequest
+	private function getURLRequest(xml:String):URLRequest
 	{
-		var name:String = xml.name();
 		var url:String = "http://" + host + (port == 80 ? "" : ":" + port);
 		var urlRequest:URLRequest;
 		
-		if (name == "listFeatures")
+		if (xml.indexOf("<listFeatures") == 0)
 			url += "/ximsslogin/";
 		else
 			url += "/Session/" + sessionId + "/sync"; 
 		urlRequest = new URLRequest(url);
 		urlRequest.method = URLRequestMethod.POST;
-		urlRequest.data = "<XIMSS>" + xml.toXMLString() + "</XIMSS>";
+		urlRequest.data = "<XIMSS>" + xml + "</XIMSS>";
 		urlRequest.requestHeaders.push(
 			new URLRequestHeader("Content-Type", "text/xml"));
 			
@@ -243,8 +255,8 @@ public class HTTPBinding extends Channel
 	
 	private function connectingLoader_errorHandler(event:ErrorEvent):void
 	{
+		statusError = event.text;
 		status = ChannelStatus.RELAX;
-		dispatchEvent(new ErrorEvent(ErrorEvent.ERROR, false, false, event.text));
 	}
 	
 	private function urlLoader_completeHandler(event:Event):void
@@ -258,8 +270,8 @@ public class HTTPBinding extends Channel
 			password = null;
 			if (xml.response.length() > 0)
 			{
+				statusError = xml.response.@errorText;
 				status = ChannelStatus.RELAX;
-				dispatchEvent(new ErrorEvent(ErrorEvent.ERROR, false, false, xml.response.@errorText));
 			}
 			else if (xml.session.length() > 0)
 			{
@@ -281,12 +293,19 @@ public class HTTPBinding extends Channel
 		{
 			for each (var node:XML in xml.children())
 			{
-				dispatchEvent(new DataEvent(DataEvent.DATA, false, false, node.toXMLString()));
+				dispatchEvent(new ChannelEvent(ChannelEvent.DATA, node.toXMLString()));
 			}
 			
 			urlLoaderWorking = false;
-			if (urlLoaderQueue.length > 0)
+			if (bying)
+			{
+				status = ChannelStatus.RELAX;
+				bying = false;
+			}
+			else if (urlLoaderQueue.length > 0)
+			{
 				send(null);
+			}
 		}
 	}
 	
@@ -297,32 +316,43 @@ public class HTTPBinding extends Channel
 			loggingIn = false;
 		urlLoaderWorking = false;
 		urlLoaderQueue = [];
+		statusError = event.text;
 		status = ChannelStatus.RELAX;
-		dispatchEvent(new ErrorEvent(ErrorEvent.ERROR, false, false, event.text));
 	}
 	
 	private function asyncLoader_completeHandler(event:Event):void
 	{
-		trace("S: " + asyncLoader.data);
-		var xml:XML = new XML(asyncLoader.data);
-		if (xml.children().length() > 0)
+		if (status != ChannelStatus.RELAX)
 		{
-			for each (var node:XML in xml.children())
+			trace("S: " + asyncLoader.data);
+			var xml:XML = new XML(asyncLoader.data);
+			if (xml.children().length() > 0)
 			{
-				dispatchEvent(new DataEvent(DataEvent.DATA, false, false, node.toXMLString()));
+				for each (var node:XML in xml.children())
+				{
+					dispatchEvent(new DataEvent(DataEvent.DATA, false, false, node.toXMLString()));
+					if (node.name() == "bye")
+					{
+						status = ChannelStatus.RELAX;
+						return;
+					}
+				}
+				ackSeq++;
 			}
-			ackSeq++;
+			callAsync();
 		}
-		callAsync();
 	}
 	
 	private function asyncLoader_errorHandler(event:ErrorEvent):void
 	{
-		trace("S: Error: " + event.text);
-		var timer:Timer = new Timer(3000, 1);
-		timer.addEventListener(TimerEvent.TIMER, 
-			function(... args):void { callAsync(); });
-		timer.start();
+		if (status != ChannelStatus.RELAX)
+		{
+			trace("S: Error: " + event.text);
+			var timer:Timer = new Timer(3000, 1);
+			timer.addEventListener(TimerEvent.TIMER, 
+				function(... args):void { callAsync(); });
+			timer.start();
+		}
 	}
 	
 }
