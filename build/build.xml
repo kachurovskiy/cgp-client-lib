@@ -1,4 +1,4 @@
-<project name="COnline" basedir="../">
+<project name="CGPClient" basedir="../">
 
 	<!-- Properties that are common for all machines -->
 	<property file="build/all.properties"/>

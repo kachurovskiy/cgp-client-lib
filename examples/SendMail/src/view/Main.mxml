@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" 
+	xmlns:view="view.*" creationComplete="init();">
+
+<mx:Script>
+<![CDATA[
+	import com.cgpClient.net.NetStatus;
+	import com.cgpClient.net.NetEvent;
+	import com.cgpClient.net.getErrorText;
+	import com.cgpClient.net.Net;
+	
+	private function init():void
+	{
+		Net.dispatcher.addEventListener(NetEvent.STATUS, statusHandler);
+	}
+	
+	private function logout():void
+	{
+		logoutButton.enabled = false;
+		Net.ximss(<bye/>, null, responseCallBack);
+	}
+	
+	private function responseCallBack(object:Object):void
+	{
+		logoutButton.errorString = getErrorText(object);
+	}
+	
+	private function statusHandler(event:NetEvent):void
+	{
+		logoutButton.enabled = event.newStatus == NetStatus.LOGGED_IN;
+		if (event.newStatus == NetStatus.RELAX && composeMail)
+			composeMail.clean();
+	}
+	
+]]>
+</mx:Script>
+	
+	<mx:LinkButton id="logoutButton" label="Logout" click="{logout();}" right="5" top="5"/>
+	
+	<view:ComposeMail id="composeMail" horizontalCenter="0" verticalCenter="0" width="600" height="400"/>
+	
+</mx:Canvas>
