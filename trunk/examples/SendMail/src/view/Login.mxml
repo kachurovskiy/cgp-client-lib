@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" title="Login" 
+	creationComplete="init();" horizontalCenter="0" verticalCenter="0">
+
+<mx:Script>
+<![CDATA[
+	import model.Model;
+	import com.cgpClient.net.NetStatus;
+	import com.cgpClient.net.NetEvent;
+	import com.cgpClient.net.Net;
+	
+	[Bindable]
+	private var errorText:String;
+	
+	[Bindable]
+	private var loggingIn:Boolean = false;
+	
+	private function init():void 
+	{
+		Net.dispatcher.addEventListener(NetEvent.STATUS, statusHandler);
+	}
+	
+	private function login():void
+	{
+		Model.instance.loginUserName = userNameInput.text;
+		Model.instance.host = hostInput.text;
+		Net.login(hostInput.text, userNameInput.text, passwordInput.text);
+	}
+	
+	private function statusHandler(event:NetEvent):void
+	{
+		errorText = event.newStatus == NetStatus.RELAX && event.error ?
+			event.error.message : null;
+		loggingIn = event.newStatus == NetStatus.LOGGING_IN;
+	}
+	
+]]>
+</mx:Script>
+	
+	<mx:Form id="form" enabled="{!loggingIn}">
+		
+		<mx:FormItem label="User Name">
+			
+			<mx:TextInput id="userNameInput" text="cgpclient1"
+				enter="if (loginButton.enabled) login();"/>
+			
+		</mx:FormItem>
+		
+		<mx:FormItem label="Password">
+			
+			<mx:TextInput id="passwordInput" text="123456" displayAsPassword="true"
+				toolTip="Ts-s, it's 123456 for cgpclient1" 
+				enter="if (loginButton.enabled) login();"/>
+			
+		</mx:FormItem>
+		
+		<mx:FormItem label="Host">
+			
+			<mx:TextInput id="hostInput" text="talktoip.com"
+				enter="if (loginButton.enabled) login();"/>
+			
+		</mx:FormItem>
+		
+		<mx:FormItem visible="{errorText != null}" includeInLayout="{errorText != null}">
+			
+			<mx:Text text="{errorText}" color="0xCC0000" width="160"/>
+			
+		</mx:FormItem>
+		
+		<mx:FormItem visible="{loggingIn}" includeInLayout="{loggingIn}" height="22">
+			
+			<mx:Text text="logging in, please wait"/>
+			
+		</mx:FormItem>
+		
+		<mx:FormItem visible="{!loggingIn}" includeInLayout="{!loggingIn}" height="22">
+			
+			<mx:Button label="Login" click="login();" id="loginButton"
+				enabled="{userNameInput.text.length > 0 &amp;&amp; passwordInput.length > 0&amp;&amp; hostInput.length > 0}"/>
+			
+		</mx:FormItem>
+		
+	</mx:Form>
+	
+</mx:Panel>
