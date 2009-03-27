@@ -185,7 +185,7 @@ public class XIMSSSocket extends Channel
 				var challengeBase:String = xml.@value;
 				var challenge:String = Base64.decode(challengeBase);
 				var authPart2:String = HMAC.hash(password, challenge);
-				var auth:String = Base64.encode(loginUserName + " ") + Base64.encode(authPart2);
+				var auth:String = Base64.encode(loginUserName + " " + authPart2);
 				
 				// data and response callbacks were given earlier 
 				send(<auth id="login" value={auth}/>);
@@ -201,8 +201,8 @@ public class XIMSSSocket extends Channel
 				var errorText:String = getErrorText(xml);
 				if (errorText)
 				{
+					statusError = errorText;
 					status = ChannelStatus.RELAX;
-					dispatchEvent(new ErrorEvent(ErrorEvent.ERROR, false, false, errorText));
 				}
 				else
 				{
@@ -212,7 +212,7 @@ public class XIMSSSocket extends Channel
 		}
 		else // regular work
 		{
-			dispatchEvent(new DataEvent(DataEvent.DATA, false, false, text));
+			dispatchEvent(new ChannelEvent(ChannelEvent.DATA, text));
 		}
 	}
 	
@@ -230,12 +230,10 @@ public class XIMSSSocket extends Channel
 			text = ErrorEvent(object).text;
 		else
 			throw new Error("What's that? Error: " + object);
-
+		
+		var previousStatus:String = status;
+		statusError = text;
 		status = ChannelStatus.RELAX;
-		var errorEvent:ErrorEvent = new ErrorEvent(ErrorEvent.ERROR, false, 
-			false, text);
-		if (willTrigger(ErrorEvent.ERROR))
-			dispatchEvent(errorEvent);
 	}
 
 }
