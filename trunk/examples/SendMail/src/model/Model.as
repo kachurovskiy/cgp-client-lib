@@ -1,5 +1,7 @@
 package model
 {
+import control.fileStorage.FileStorage;
+	
 [Bindable]
 public class Model
 {
@@ -30,6 +32,8 @@ public class Model
 
 	public var host:String;
 
+	public var fileStorage:FileStorage;
+
 	//--------------------------------------------------------------------------
 	//
 	//  Constructor
@@ -40,7 +44,25 @@ public class Model
 	{
 		if (_instance)
 			throw new Error("Singleton exception");
+		
+		setDefaultValues();
 	}
 
+	//--------------------------------------------------------------------------
+	//
+	//  Methods
+	//
+	//--------------------------------------------------------------------------
+	
+	/**
+	 *  Called on logout.
+	 */
+	public function setDefaultValues():void
+	{
+		loginUserName = null;
+		host = null;
+		fileStorage = null;
+	}
+	
 }
 }
