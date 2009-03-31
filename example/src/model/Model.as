@@ -1,6 +1,6 @@
 package model
 {
-import control.fileStorage.FileStorage;
+import com.cgpClient.fileStorage.FileStorage;
 	
 [Bindable]
 public class Model

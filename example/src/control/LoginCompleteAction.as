@@ -1,6 +1,7 @@
 package control
 {
-import control.fileStorage.FileStorage;
+
+import com.cgpClient.fileStorage.FileStorage;
 
 import model.Model;
 	

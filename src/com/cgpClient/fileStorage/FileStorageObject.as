@@ -18,30 +18,58 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE. */
 
-package com.cgpClient.net
+package com.cgpClient.fileStorage
 {
-/**
- *  Possible statuses of the XIMSS connection. 
- */
-public class NetStatus
+[Bindable]
+public class FileStorageObject
 {
-
-	/**
-	 *  Connection is not established and is not being established right now.
-	 *  Application usually has this status until user will enter login 
-	 *  credentials and press "login".   
-	 */	
-	public static const RELAX:String = "relax";
 	
-	/**
-	 *  Trying to log in.
-	 */
-	public static const LOGGING_IN:String = "loggingIn";
-
-	/**
-	 *  We are logged in.
-	 */
-	public static const LOGGED_IN:String = "loggedIn";
-
+	protected var _path:String;
+	
+	public function get path():String
+	{
+		return _path;
+	}
+	
+	public function set path(value:String):void
+	{
+		if (_path == value)
+			return;
+		
+		_path = value;
+		parsePath();
+	}
+	
+	public var name:String;
+	
+	public var directory:String;
+	
+	public var size:int = 0;
+	
+	public function FileStorageObject(path:String = null)
+	{
+		this.path = path;
+	}
+	
+	public function update(xml:XML):void
+	{
+		// file and directory handle all by themselves
+	}
+	
+	protected function parsePath():void
+	{
+		if (_path)
+		{
+			var split:Array = _path.split("/");
+			name = String(split.pop());
+			directory = split.length == 0 ? "" : split.join("/");
+		}
+		else
+		{
+			name = null;
+			directory = null;
+		}
+	}
+	
 }
 }

@@ -18,30 +18,50 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE. */
 
-package com.cgpClient.net
+package com.cgpClient.fileStorage
 {
-/**
- *  Possible statuses of the XIMSS connection. 
- */
-public class NetStatus
+import mx.collections.ArrayCollection;
+	
+[Bindable]
+public class FileStorageDirectory extends FileStorageObject
 {
-
-	/**
-	 *  Connection is not established and is not being established right now.
-	 *  Application usually has this status until user will enter login 
-	 *  credentials and press "login".   
-	 */	
-	public static const RELAX:String = "relax";
+	
+	public var children:ArrayCollection = new ArrayCollection();
+	
+	public var files:int = 0;
+	
+	public var listed:Boolean = false;
+	
+	public function FileStorageDirectory(path:String = null)
+	{
+		super(path);
+	}
 	
 	/**
-	 *  Trying to log in.
+	 *  What we handle:
+	 * 
+	 *  (sizeLimit and filesLimit only for root)
+	 *  <fileDirInfo id="A36" directory="" size="133341375" files="241" 
+	 *      sizeLimit="3" filesLimit="3000"/>
+	 * 
+	 *  <fileInfo id="A38" fileName="$DomainPBXApp" type="directory"/>
 	 */
-	public static const LOGGING_IN:String = "loggingIn";
-
-	/**
-	 *  We are logged in.
-	 */
-	public static const LOGGED_IN:String = "loggedIn";
-
+	override public function update(xml:XML):void
+	{
+		var name:String = xml.name();
+		var directory:String = xml.hasOwnProperty("@directory") ? xml.@directory : "";
+		if (name == "fileDirInfo")
+		{
+			path = directory;
+			size = int(xml.@size);
+			files = xml.@files;
+		}
+		else if (name == "fileInfo" && xml.hasOwnProperty("@type"))
+		{
+			var fileName:String = xml.@fileName;
+			path = directory == "" ? fileName : directory + "/" + fileName;
+		}
+	}
+	
 }
 }

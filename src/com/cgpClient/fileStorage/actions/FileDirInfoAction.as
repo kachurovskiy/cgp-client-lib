@@ -18,30 +18,40 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE. */
 
-package com.cgpClient.net
+package com.cgpClient.fileStorage.actions
 {
-/**
- *  Possible statuses of the XIMSS connection. 
- */
-public class NetStatus
-{
-
-	/**
-	 *  Connection is not established and is not being established right now.
-	 *  Application usually has this status until user will enter login 
-	 *  credentials and press "login".   
-	 */	
-	public static const RELAX:String = "relax";
+import com.cgpClient.fileStorage.FileStorage;
+import com.cgpClient.net.Net;
+import com.cgpClient.net.getErrorText;
 	
-	/**
-	 *  Trying to log in.
-	 */
-	public static const LOGGING_IN:String = "loggingIn";
-
-	/**
-	 *  We are logged in.
-	 */
-	public static const LOGGED_IN:String = "loggedIn";
-
+public class FileDirInfoAction extends FileStorageAction
+{
+	
+	private var directory:String;
+	
+	public function start(fileStorage:FileStorage, directory:String):void
+	{
+		this.fileStorage = fileStorage;
+		this.directory = directory;
+		
+		startRunning();
+		
+		Net.ximss(<fileDirInfo directory={directory}/>, dataCallBack, responseCallBack);
+	}
+	
+	private function dataCallBack(xml:XML):void
+	{
+		fileStorage.update(xml);
+	}
+	
+	private function responseCallBack(object:Object):void
+	{
+		var text:String = getErrorText(object);
+		if (text)
+			error(text);
+		else
+			complete();
+	}
+	
 }
 }
