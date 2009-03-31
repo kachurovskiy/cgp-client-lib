@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="vertical" title="Compose E-Mail"
-	creationComplete="init();" enabled="{!inProcess}">
+	creationComplete="init();" enabled="{!inProcess}" xmlns:local="*" xmlns:view="view.*">
 
 <mx:Script>
 <![CDATA[
+	import mx.collections.ArrayCollection;
 	import com.cgpClient.net.getErrorText;
 	import model.Model;
 	import com.cgpClient.net.Net;
@@ -13,6 +14,12 @@
 	
 	[Bindable]
 	private var errorText:String;
+	
+	[Bindable]
+	private var showTree:Boolean = true;
+	
+	[Bindable]
+	private var attachedFiles:ArrayCollection = new ArrayCollection();
 	
 	private function init():void 
 	{
@@ -65,7 +72,7 @@
 
 	<mx:Form id="form" width="100%" height="100%">
 		
-		<mx:FormItem label="To:" width="100%">
+ 		<mx:FormItem label="To:" width="100%">
 			
 			<mx:TextInput id="toInput" width="100%"/>
 			
@@ -80,7 +87,18 @@
 		<mx:TextArea id="bodyInput" width="100%" height="100%"/>
 			
 	</mx:Form>
-	
+
+	<!-- <mx:HBox width="100%" height="250">
+		
+		<mx:Tree id="tree" width="60%" height="100%" labelField="name" showRoot="false"
+			dataProvider="{Model.instance.fileStorage.tree}"
+	 		visible="{showTree}" includeInLayout="{showTree}"/>
+	 		
+	 	<mx:List id="list" width="40%" height="100%" 
+	 		dataProvider="{attachedFiles}" itemRenderer="{new ClassFactory(FileItemRenderer)}"/>
+		
+	</mx:HBox> -->
+		
 	<mx:states>
 		
 		<mx:State name="inProcess">
@@ -92,6 +110,8 @@
 		<mx:State name="done">
 			
 			<mx:RemoveChild target="{form}" />
+			
+			<mx:RemoveChild target="{sendButton}" />
 			
 			<mx:AddChild>
 				
@@ -110,7 +130,13 @@
 		
 	</mx:states>
 	
-	<mx:ControlBar width="100%" horizontalAlign="right">
+	<mx:ControlBar id="myControlBar" width="100%">
+		
+		<!-- <mx:LinkButton id="filesButton" 
+			label="{showTree ? 'Do not attach anything' : 'Attach files from FileStorage'}"
+			click="showTree = !showTree"/> -->
+		
+		<mx:Spacer width="100%"/>
 		
 		<mx:Button id="sendButton" label="Send" click="send();"
 			enabled="{toInput.text.length > 0 &amp;&amp; subjectInput.text.length > 0 &amp;&amp; bodyInput.text.length > 0}"/>

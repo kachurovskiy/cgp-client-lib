@@ -18,30 +18,50 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE. */
 
-package com.cgpClient.net
+package com.cgpClient.fileStorage
 {
-/**
- *  Possible statuses of the XIMSS connection. 
- */
-public class NetStatus
+[Bindable]
+public class FileStorageFile extends FileStorageObject
 {
-
-	/**
-	 *  Connection is not established and is not being established right now.
-	 *  Application usually has this status until user will enter login 
-	 *  credentials and press "login".   
-	 */	
-	public static const RELAX:String = "relax";
+	
+	public var extension:String;
+	
+	public var timeModified:String;
+	
+	public function FileStorageFile(path:String = null)
+	{
+		super(path);
+	}
 	
 	/**
-	 *  Trying to log in.
+	 *  What we handle: 
+	 * 
+	 *  <fileInfo id="A38" fileName="ProntoCore.swc" size="2925" 
+	 *      timeModified="20090327T122925"/>
+	 * 
+	 *  <fileInfo id="A39" fileName="SoftwareEngineer.doc" directory="docs" 
+	 *      size="36352" timeModified="20090326T101443"/>
 	 */
-	public static const LOGGING_IN:String = "loggingIn";
-
-	/**
-	 *  We are logged in.
-	 */
-	public static const LOGGED_IN:String = "loggedIn";
-
+	override public function update(xml:XML):void
+	{
+		var name:String = xml.name();
+		if (name == "fileInfo")
+		{
+			var directory:String = xml.hasOwnProperty("@directory") ? xml.@directory : "";
+			var fileName:String = xml.@fileName;
+			path = directory == "" ? fileName : directory + "/" + fileName;
+			size = int(xml.@size);
+			timeModified = xml.@timeModified; 
+		}
+	}
+	
+	override protected function parsePath():void
+	{
+		super.parsePath();
+		
+		var nameSplit:Array = name.split(".");
+		extension = nameSplit.length > 1 ? String(nameSplit.pop()) : null;
+	}
+	
 }
 }
