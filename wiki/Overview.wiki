@@ -70,7 +70,7 @@ function statusHandler(event:NetEvent):void
     {
         // we're in, ximss() can be used
     }
-    else if (event.status == NetStatus.RELAX && event.error)
+    else if (event.status == NetStatus.RELAX)
     {
         if (event.error) 
             // connection has broke or login failed
