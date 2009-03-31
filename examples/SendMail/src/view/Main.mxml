@@ -17,12 +17,6 @@
 	private function logout():void
 	{
 		logoutButton.enabled = false;
-		Net.ximss(<bye/>, null, responseCallBack);
-	}
-	
-	private function responseCallBack(object:Object):void
-	{
-		logoutButton.errorString = getErrorText(object);
 	}
 	
 	private function statusHandler(event:NetEvent):void
@@ -37,6 +31,6 @@
 	
 	<mx:LinkButton id="logoutButton" label="Logout" click="{logout();}" right="5" top="5"/>
 	
-	<view:ComposeMail id="composeMail" horizontalCenter="0" verticalCenter="0" width="600" height="400"/>
+	<view:ComposeMail id="composeMail" horizontalCenter="0" verticalCenter="0" width="600" height="550"/>
 	
 </mx:Canvas>
