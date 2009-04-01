@@ -5,6 +5,8 @@
 	
 	<target name="asdoc" description="Generate ASDoc for library">
 		
+		<delete dir="${basedir}/asdoc" failonerror="false" includeemptydirs="true" />
+		
 		<java jar="${FLEX_HOME}/lib/asdoc.jar" fork="true" failonerror="true" 
 			maxmemory="100m" dir="${FLEX_HOME}/frameworks">
     		<arg value="-output=${basedir}/asdoc"/>

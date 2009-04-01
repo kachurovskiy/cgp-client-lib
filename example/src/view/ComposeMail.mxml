@@ -1,13 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:Panel xmlns:mx="http://www.adobe.com/2006/mxml" layout="vertical" title="Compose E-Mail"
-	creationComplete="init();" enabled="{!inProcess}" xmlns:local="*" xmlns:view="view.*">
+	creationComplete="init();" enabled="{!inProcess}" xmlns:local="*" xmlns:view="view.*"
+	verticalGap="0">
 
 <mx:Script>
 <![CDATA[
+	import mx.events.CollectionEventKind;
+	import mx.events.CollectionEvent;
+	import com.cgpClient.fileStorage.FileStorageDirectory;
+	import mx.core.UIComponent;
+	import mx.managers.DragManager;
+	import com.cgpClient.fileStorage.FileStorageFile;
+	import mx.events.DragEvent;
 	import mx.collections.ArrayCollection;
 	import com.cgpClient.net.getErrorText;
 	import model.Model;
 	import com.cgpClient.net.Net;
+	
+	private static const WARNING_FILES_SIZE:Number = 8;
 	
 	[Bindable]
 	private var inProcess:Boolean = false;
@@ -15,15 +25,56 @@
 	[Bindable]
 	private var errorText:String;
 	
-	[Bindable]
-	private var showTree:Boolean = true;
+	private var _showTree:Boolean = false;
 	
+	[Bindable("showTreeChange")]
+	public function get showTree():Boolean
+	{
+		return _showTree;
+	}
+	
+	public function set showTree(value:Boolean):void
+	{
+		if (_showTree == value)
+			return;
+		
+		_showTree = value;
+		checkTree();
+		dispatchEvent(new Event("showTreeChange"));
+	}
+	
+	private var _fileStorageList:ArrayCollection;
+	
+	public function get fileStorageList():ArrayCollection
+	{
+		return _fileStorageList;
+	}
+	
+	public function set fileStorageList(value:ArrayCollection):void
+	{
+		if (_fileStorageList)
+			_fileStorageList.removeEventListener(CollectionEvent.COLLECTION_CHANGE,
+				fileStorageList_collectionChangeHandler);
+		
+		_fileStorageList = value;
+		
+		if (_fileStorageList)
+			_fileStorageList.addEventListener(CollectionEvent.COLLECTION_CHANGE,
+				fileStorageList_collectionChangeHandler);
+	}
+	
+	private var attachedFiles:Array = [];
 	[Bindable]
-	private var attachedFiles:ArrayCollection = new ArrayCollection();
+	private var filesNumber:int = 0;
+	[Bindable]
+	private var filesSize:Number = 0;
 	
 	private function init():void 
 	{
 		clean();
+		
+		// this event bubbles from AttachedFileRenderer
+		attachedFilesContainer.addEventListener(Event.CANCEL, cancelHandler);
 	}
 	
 	public function clean():void
@@ -32,8 +83,11 @@
 		
 		subjectInput.text = "Test letter";
 		
-		bodyInput.text = "Hi,\n\n    Just a sample letter from SendMail example " +
-			"of CGP Client Library.\n\n--\n" + Model.instance.loginUserName;
+		attachedFiles = [];
+		updateFilesProperties();
+		
+		bodyInput.text = "Hi,\n\n    Just a sample letter from CGP Library Example." +
+			"\n\n--\n" + Model.instance.loginUserName;
 			
 		toInput.setFocus();	
 	}
@@ -47,17 +101,44 @@
 		if (Model.instance.loginUserName.indexOf("@") == -1)
 			from += "@" + Model.instance.host;
 		var xml:XML = 
-			<messageSubmit id="A001" useDSN="yes" >
+			<messageSubmit>
 				<EMail>
 					<From>{from}</From>
 					<Subject>{subjectInput.text}</Subject>
 					<To>{toInput.text}</To>
-					<X-Mailer>CGPClient SendMail Example</X-Mailer>
-					<MIME type="text" subtype="plain">{bodyInput.text}</MIME>
+					<X-Mailer>CGP Client Library Example</X-Mailer>
 				</EMail>
 			</messageSubmit>;
+		
+		var bodyMIME:XML = <MIME type="text" subtype="plain">{bodyInput.text}</MIME>;
+		var eMail:XML = xml.EMail[0];
+		if (attachedFiles.length > 0)
+		{
+			var mixedMIME:XML = <MIME type="multipart" subtype="mixed">{bodyMIME}</MIME>;
+			eMail.appendChild(mixedMIME);
+			for each (var fileStorageFile:FileStorageFile in attachedFiles)
+			{
+				mixedMIME.appendChild(<MIME type="attachment" fileName={fileStorageFile.path} 
+					disposition-filename={fileStorageFile.name}/>);
+			}
+		}
+		else
+		{
+			eMail.appendChild(bodyMIME);
+		}
 		inProcess = true;
 		Net.ximss(xml, null, responseCallBack);
+	}
+	
+	/**
+	 *  Expand some tree nodes for user.
+	 */
+	private function checkTree():void
+	{
+		var dataProvider:ArrayCollection = tree ? 
+			tree.dataProvider as ArrayCollection : null;
+		if (_showTree && dataProvider && dataProvider.length > 0)
+			tree.expandItem(dataProvider.getItemAt(0), true, false);
 	}
 	
 	private function responseCallBack(object:Object):void
@@ -67,10 +148,117 @@
 		inProcess = false;
 	}
 	
+	private function getDropObjects(event:DragEvent):Array
+	{
+		var array:Array = event.dragSource.dataForFormat("treeItems") as Array;
+		if (!array || array.length == 0)
+			return null;
+		for each (var object:Object in array)
+		{
+			if (!(object is FileStorageFile))
+				return null;
+		}
+		return array;
+	}
+	
+	private function addFiles(array:Array):void
+	{
+		for each (var fileStorageFile:FileStorageFile in array)
+		{
+			if (attachedFiles.indexOf(fileStorageFile) == -1)
+			{
+				attachedFiles.push(fileStorageFile);
+				var child:AttachedFileRenderer = new AttachedFileRenderer();
+				child.data = fileStorageFile;
+				attachedFilesContainer.addChild(child);
+			}
+		}
+		updateFilesProperties();
+	}
+	
+	private function removeFile(fileStorageFile:FileStorageFile):void
+	{
+		var index:int = attachedFiles.indexOf(fileStorageFile);
+		if (index == -1)
+			throw new Error("File " + fileStorageFile + " is not attached and " + 
+				"can not be removed");
+		attachedFilesContainer.removeChildAt(index);
+		attachedFiles.splice(index, 1);
+		updateFilesProperties();
+	}
+	
+	private function updateFilesProperties():void
+	{
+		var total:Number = 0; 
+		for each (var fileStorageFile:FileStorageFile in attachedFiles)
+		{
+			total += fileStorageFile.size;
+		}
+		filesSize = Math.round(total / 1024 / 1024 * 10) / 10;
+		
+		filesNumber = attachedFiles.length;
+	}
+	
+	private function form_dragEnterHandler(event:DragEvent):void
+	{
+		if (!getDropObjects(event))
+			return;
+		DragManager.acceptDragDrop(UIComponent(event.target));
+	}
+	
+	private function form_dragOverHandler(event:DragEvent):void
+	{
+		var array:Array = getDropObjects(event);
+		if (array)
+			DragManager.showFeedback(DragManager.LINK);
+		else
+			DragManager.showFeedback(DragManager.NONE);
+	}
+	
+	private function form_dragDropHandler(event:DragEvent):void
+	{
+		addFiles(getDropObjects(event));
+	}
+	
+	private function tree_doubleClickHandler(event:MouseEvent):void
+	{
+		if (tree.selectedItem is FileStorageFile)
+			addFiles([ tree.selectedItem ]);
+		else if (tree.selectedItem is FileStorageDirectory)
+			tree.expandItem(tree.selectedItem, true, true);
+	}
+	
+	private function cancelHandler(event:Event):void
+	{
+		var renderer:AttachedFileRenderer = event.target as AttachedFileRenderer;
+		if (renderer && renderer.data as FileStorageFile)
+			removeFile(FileStorageFile(renderer.data));
+	}
+	
+	private function fileStorageList_collectionChangeHandler(event:CollectionEvent):void
+	{
+		// it's not very smart but is simple and reliable
+		var n:int = attachedFiles.length;
+		for (var i:int = n - 1; i >= 0; i--)
+		{
+			var fileStorageFile:FileStorageFile = attachedFiles[i];
+			if (_fileStorageList.getItemIndex(fileStorageFile) == -1)
+				removeFile(fileStorageFile);
+		}
+	}
+	
 ]]>
 </mx:Script>
 
-	<mx:Form id="form" width="100%" height="100%">
+	<!-- If some file will be removed from FileStorage, it should be removed
+		from attached files list. This will be useful when FileStorage will
+		allow user to manage remote FileStorage, now it's not implemented -->
+	<mx:Binding source="Model.instance.fileStorage.list" destination="fileStorageList"/>
+
+	<mx:Form id="form" width="100%" height="100%" 
+		dragEnter="form_dragEnterHandler(event);" 
+		dragOver="form_dragOverHandler(event);" 
+		dragDrop="form_dragDropHandler(event);">
 		
  		<mx:FormItem label="To:" width="100%">
 			
@@ -83,22 +271,30 @@
 			<mx:TextInput id="subjectInput" width="100%"/>
 			
 		</mx:FormItem>
-			
+		
+		<mx:Tile id="attachedFilesContainer" width="100%" 
+			borderStyle="inset" visible="{filesNumber > 0}"
+			includeInLayout="{filesNumber > 0}" paddingBottom="2"
+			paddingLeft="2" paddingRight="2" paddingTop="2"/>
+		
+		<mx:Label text="Note: total files size is {filesSize} Mb" 
+			visible="{filesSize > WARNING_FILES_SIZE}" fontWeight="bold"
+			includeInLayout="{filesSize > WARNING_FILES_SIZE}"/>
+		
 		<mx:TextArea id="bodyInput" width="100%" height="100%"/>
-			
+		
 	</mx:Form>
 
-	<!-- <mx:HBox width="100%" height="250">
+	<mx:HBox id="treeContainer" width="100%" height="150" paddingLeft="16" paddingRight="16"
+		paddingBottom="16" visible="{showTree}" includeInLayout="{showTree}">
 		
-		<mx:Tree id="tree" width="60%" height="100%" labelField="name" showRoot="false"
-			dataProvider="{Model.instance.fileStorage.tree}"
-	 		visible="{showTree}" includeInLayout="{showTree}"/>
-	 		
-	 	<mx:List id="list" width="40%" height="100%" 
-	 		dataProvider="{attachedFiles}" itemRenderer="{new ClassFactory(FileItemRenderer)}"/>
-		
-	</mx:HBox> -->
-		
+		<mx:Tree id="tree" width="100%" height="100%" labelField="name"
+			dataProvider="{Model.instance.fileStorage.tree}" dragEnabled="true"
+			allowMultipleSelection="true" doubleClickEnabled="true"
+			doubleClick="tree_doubleClickHandler(event);"/>
+	 	
+	</mx:HBox>
+	
 	<mx:states>
 		
 		<mx:State name="inProcess">
@@ -111,6 +307,12 @@
 			
 			<mx:RemoveChild target="{form}" />
 			
+			<mx:RemoveChild target="{treeContainer}" />
+			
+			<mx:RemoveChild target="{filesButton}" />
+			
+			<mx:RemoveChild target="{spacer}" />
+			
 			<mx:RemoveChild target="{sendButton}" />
 			
 			<mx:AddChild>
@@ -120,7 +322,7 @@
 					
 					<mx:Text width="200" text="{errorText ? errorText : 'Letter has been successfuly sent.'}"/>
 					
-					<mx:Button label="One more" click="currentState = ''"/> 
+					<mx:Button label="One more" click="clean(); currentState = ''"/> 
 					
 				</mx:VBox>
 				
@@ -132,11 +334,10 @@
 	
 	<mx:ControlBar id="myControlBar" width="100%">
 		
-		<!-- <mx:LinkButton id="filesButton" 
-			label="{showTree ? 'Do not attach anything' : 'Attach files from FileStorage'}"
-			click="showTree = !showTree"/> -->
+		<mx:LinkButton id="filesButton" click="showTree = !showTree" 
+			label="{showTree ? 'Close files tree' : 'Attach files from FileStorage'}"/>
 		
-		<mx:Spacer width="100%"/>
+		<mx:Spacer id="spacer" width="100%"/>
 		
 		<mx:Button id="sendButton" label="Send" click="send();"
 			enabled="{toInput.text.length > 0 &amp;&amp; subjectInput.text.length > 0 &amp;&amp; bodyInput.text.length > 0}"/>

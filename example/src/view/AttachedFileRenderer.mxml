@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:HBox xmlns:mx="http://www.adobe.com/2006/mxml" horizontalGap="0" verticalAlign="middle">
+	
+	<mx:Label text="{data.name}" />
+	
+	<mx:LinkButton label="x" click="dispatchEvent(new Event(Event.CANCEL, true))"/> 
+	
+</mx:HBox>
