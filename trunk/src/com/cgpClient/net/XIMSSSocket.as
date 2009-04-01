@@ -84,6 +84,7 @@ public class XIMSSSocket extends Channel
 		status = ChannelStatus.CONNECTING;
 		try
 		{
+			trace("C: starting socket on " + host + ":" + port);
 			socket.connect(host, port);
 		}
 		catch (error:Error)

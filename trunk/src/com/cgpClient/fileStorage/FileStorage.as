@@ -25,6 +25,17 @@ import com.cgpClient.fileStorage.actions.FileDirInfoAction;
 
 import mx.collections.ArrayCollection;
 
+/**
+ *  <b>Whole <code>com.cgpClient.fileStorage</code> package is in early state of
+ *  development.</b>
+ * 
+ *  <p>This class represents remote File Storage. Now it allows only to list
+ *  once all the remote File Storage, but soon it will allow much more: 
+ *  directories creation, files operations, download, upload and so on.</p>
+ * 
+ *  <p>Most common use of this class is binding <code>tree</code> property
+ *  to <code>dataProvider</code> of some <code>mx.controls.Tree</code>.</p>
+ */
 public class FileStorage
 {
 	
