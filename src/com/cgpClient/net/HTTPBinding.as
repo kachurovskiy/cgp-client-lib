@@ -350,7 +350,7 @@ public class HTTPBinding extends Channel
 			{
 				for each (var node:XML in xml.children())
 				{
-					dispatchEvent(new DataEvent(DataEvent.DATA, false, false, node.toXMLString()));
+					dispatchEvent(new ChannelEvent(ChannelEvent.DATA, node.toXMLString()));
 					if (node.name() == "bye")
 					{
 						status = ChannelStatus.RELAX;
