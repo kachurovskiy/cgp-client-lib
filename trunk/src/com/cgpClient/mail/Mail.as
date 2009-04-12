@@ -1,3 +1,23 @@
+/* Copyright (c) 2009 Maxim Kachurovskiy
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE. */
+
 package com.cgpClient.mail
 {
 import com.cgpClient.CGPUtils;
@@ -146,6 +166,16 @@ public class Mail extends EventDispatcher
 	 *              sending a message to the e-mail address?</MIME>
 	 *      </EMail>
 	 *  </folderMessage>
+	 * 
+	 *  <folderReport id="A003" folder="Drafts" index="127" UID="755" 
+	 *      mode="added" messages="302" unseen="1">
+	 *      <FLAGS>Recent,Drafts</FLAGS>
+	 *      <From>Other Name</From>
+	 *  </folderReport>
+	 * 
+	 *  <EMail>
+	 *       <... />
+	 *  </EMail>
 	 */
 	public function update(xml:XML):void
 	{
@@ -213,6 +243,9 @@ public class Mail extends EventDispatcher
 		{
 			mime = new MIME(xml.MIME[0]);
 		}
+		
+		if (xml.EMail.length() > 0)
+			update(xml.EMail[0]);
 	}
 	
 	public function toXML(userName:String, realName:String):XML
