@@ -36,5 +36,26 @@ public class CGPUtils
 		return date; 
 	}
 
+	public static function htmlToFlash(htmlText:String):String
+	{
+		// remove \n linebreaks that do not mean real linebreaks
+		htmlText = htmlText.replace(/\r/g, ""); 
+		htmlText = htmlText.replace(/\n/g, "");
+		
+		htmlText = htmlText.replace(/<(\s)*\/?(\s)*br[^>](\s)*\/?(\s)*>/gi, "\n");
+		// TODO: replace <p>, <div> and other block elements with line breaks
+		
+		htmlText = htmlText.replace(/<\/?[^>]*>/g, ""); // remove markup
+		
+		return htmlText;
+	}
+	
+	public static function plainToFlash(plainText:String):String
+	{
+		plainText = plainText.replace(/\r\n/g, "\r"); // flash treats this line break as 2 breaks 
+		
+		return plainText;
+	}
+
 }
 }

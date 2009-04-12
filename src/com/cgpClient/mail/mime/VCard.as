@@ -20,16 +20,18 @@ THE SOFTWARE. */
 
 package com.cgpClient.mail.mime
 {
-public class MIMEReport
+public class VCard
 {
 	
-	public function MIMEReport(xml:XML = null)
+	private var xml:XML;
+	
+	public function VCard(xml:XML = null)
 	{
 		if (xml)
 			update(xml);
 	}
 	
-	private function update(xml:XML):void {}
+	public function update(xml:XML):void {}
 
 }
 }

@@ -1,3 +1,23 @@
+/* Copyright (c) 2009 Maxim Kachurovskiy
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE. */
+
 package com.cgpClient.mail.mime
 {
 import com.cgpClient.mail.Mail;
@@ -28,16 +48,21 @@ public class MIME
 	
 	public var classValue:String;
 	
-	public var types:ArrayCollection = new ArrayCollection();
-		/* contains Type-name */
+	public var types:Object = [];
+		/* String (ex. "name") -> String (ex. "file1.png"), contains Type-name */
 	
-	public var dispositions:ArrayCollection = new ArrayCollection(); 
-		/* contains Disposition-name */
+	public var dispositions:Object = []; 
+		/* String (ex. "filename") -> String (ex. "file1.png"), contains Disposition-name */
 	
 	public var children:ArrayCollection = new ArrayCollection(); 
 		/* contains MIMEs, EMails and other Objects */
 	
-	private var xml:XML;
+	private var _xml:XML;
+	
+	public function get xml():XML
+	{
+		return _xml;
+	}
 	
 	public function MIME(xml:XML = null)
 	{
@@ -52,7 +77,7 @@ public class MIME
 	
 	private function update(xml:XML):void
 	{
-		this.xml = xml;
+		_xml = xml;
 		
 		if (xml.hasOwnProperty("@partID"))
 			partId = xml.@partID;
@@ -75,48 +100,70 @@ public class MIME
 		if (xml.hasOwnProperty("@class"))
 			classValue = xml["@class"];
 		
-		// TODO: fill dispositions and children
+		// fill dispositions and types
+		for each (var attribute:XML in xml.attributes())
+		{
+			var name:String = attribute.name();
+			if (name.indexOf("Disposition-") == 0)
+				dispositions[name.substr(12)] = attribute.toString();
+			else if (name.indexOf("Type-") == 0)
+				types[name.substr(5)] = attribute.toString();
+		}
 		
 		children.removeAll();
-		for each (var node:XML in xml.children())
+		if (type == "multipart")
 		{
-			var child:Object = factorChildren(node);
-			if (child)
-				children.addItem(child);
+			for each (var node:XML in xml.children())
+			{
+				var childMIME:MIME = new MIME(node);
+				children.addItem(childMIME);
+			}
+		}
+		else if ((type == "message" && subtype == "rfc822") ||
+			(type == "text" && subtype == "rfc822-headers"))
+		{
+			var mail:Mail = new Mail(xml.EMail[0]);
+			children.addItem(mail);
+		}
+		else if (type == "text" && (subtype == "directory" || subtype == "x-vcard"))
+		{
+			var vCard:VCard = new VCard(xml.vCard[0]);
+			children.addItem(vCard);
+		}
+		else if (type == "text" && subtype == "x-vgroup")
+		{
+			var vCardGroup:VCardGroup = new VCardGroup(xml.vCardGroup[0]);
+			children.addItem(vCardGroup);
+		}
+		else if (type == "text" && subtype == "calendar")
+		{
+			var iCalendar:ICalendar = new ICalendar(xml.iCalendar[0]);
+			children.addItem(iCalendar);
+		}
+		else if (type == "message" && (subtype == "disposition-notification" ||
+			subtype == "delivery-status"))
+		{
+			var mimeReport:MIMEReport = new MIMEReport(xml.MIMEReport[0]);
+			children.addItem(mimeReport);
+		}
+		else if (type == "text")
+		{
+			var string:String = xml.toString();
+			children.addItem(string);
+		}
+		else
+		{
+			// not sure that it's an error. We can receive very strange things.
 		}
 	}
 	
 	public function toXML():XML
 	{
-		if (type == "text")
+		if (type == "text" && subtype == "plain")
 			return <MIME type="text" subtype="plain">{children[0]}</MIME>;
 		throw new Error("Only text is implemented");
 		return null;
 	}
 	
-	private function factorChildren(node:XML):Object
-	{
-		var child:Object;
-		if (type == "message" && (subtype == "rfc822" ||
-			subtype == "rfc822-headers"))
-		{
-			child = new Mail(node);
-		}
-		else if (type == "text") // any subtype, don't work with that yet
-		{
-			child = node.toString();
-		}
-		else if (type == "message" && (subtype == "disposition-notification" ||
-			subtype == "delivery-status"))
-		{
-			child = new MIMEReport(node);
-		}
-		else // type == "multipart" && others
-		{
-			child = new MIME(node);
-		}
-		return child;
-	}
-
 }
 }
