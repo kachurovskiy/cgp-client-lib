@@ -106,7 +106,8 @@ public class Folder extends EventDispatcher
 			}
 			fields = newFields;
 		}
-		else if (xmlName == "folderReport" && xml.@folder == name)
+		else if ((xmlName == "folderReport" || xmlName == "folderMessage") && 
+			xml.@folder == name)
 		{
 			open = true;
 			

@@ -172,11 +172,11 @@ public class MailboxManager
 			folder.update(xml);
 			_folders.addItem(folder);
 		}
-		else if (name == "folderReport")
+		else if (name == "folderReport" || name == "folderMessage")
 		{
 			folder = getFolder(xml.@folder);
 			if (!folder)
-				throw new Error("folderReport was watched, but folder \"" + 
+				throw new Error(name + " was watched, but folder \"" + 
 					xml.@folder + "\" is not found");
 			folder.update(xml);
 		}

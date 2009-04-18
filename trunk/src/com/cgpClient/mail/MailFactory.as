@@ -174,7 +174,8 @@ public class MailFactory
 		for (var i:int = 0; i < n; i++)
 		{
 			var childMIME:MIME = MIME(children.getItemAt(i));
-			if (childMIME.disposition == "attachment")
+			if (childMIME.disposition == "attachment")// ||
+				//(childMIME.type == "message" && childMIME.subtype == "rfc822"))
 				result.push(childMIME);
 		}
 		return result;
