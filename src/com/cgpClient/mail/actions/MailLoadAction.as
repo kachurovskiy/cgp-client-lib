@@ -34,13 +34,11 @@ public class MailLoadAction
 			return;
 		
 		this.mail = mail;
-		Net.ximss(<folderRead folder={mail.folder.name} 
-			uid={mail.uid} totalSizeLimit={10 * 1000 * 1000}/>, dataCallBack, responseCallBack);
-	}
-	
-	private function dataCallBack(xml:XML):void
-	{
-		mail.update(xml);
+		var xml:XML = <folderRead folder={mail.folder.name} 
+			uid={mail.uid} totalSizeLimit={10 * 1000 * 1000}/>;
+		if (mail.partId)
+			xml.@partID = mail.partId;
+		Net.ximss(xml, null, responseCallBack);
 	}
 	
 	private function responseCallBack(object:Object):void
