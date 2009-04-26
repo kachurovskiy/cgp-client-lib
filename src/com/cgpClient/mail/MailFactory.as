@@ -33,15 +33,28 @@ public class MailFactory
 {
 	
 	/**
-	 *  Creates visual representation of some MIME element. Pass main Mail
-	 *  mime element to get mail view. 
+	 *  Creates visual representation of MIME element. Pass main Mail
+	 *  mime element to get the entire mail content view. 
 	 * 
-	 *  @mime Some MIME instance. Usually it is <code>Mail.mime</code>.
+	 *  @mime MIME instance. Usually it is <code>Mail.mime</code>.
 	 * 
-	 *  @return UIComponent instance representing given MIME instance.
+	 *  @return UIComponent instance representing given MIME.
 	 */
 	public static function factorMIMEView(mime:MIME):UIComponent
 	{
+		if (mime.readError)
+		{
+			var readErrorLabel:Label = createLabel("MIME (" + mime.type + 
+				"/" + mime.subtype + ") read error: " + mime.readError);
+			return readErrorLabel;
+		}
+		if (mime.parseError)
+		{
+			var parseErrorLabel:Label = createLabel("MIME (" + mime.type + 
+				"/" + mime.subtype + ") parse error: " + mime.parseError);
+			return parseErrorLabel;
+		}
+		
 		// go from simplest cases to more complex ones
 		var type:String = mime.type;
 		var subtype:String = mime.subtype;
@@ -110,6 +123,16 @@ public class MailFactory
 					childView = factorMIMEView(bestAlternativeMIME);
 				return childView;
 			}
+			else if (subtype == "related")
+			{
+				// Stub
+				if (children.length > 0)
+					return factorMIMEView(MIME(children.getItemAt(0)));
+				
+				// let us think that this mime contains text/html and
+				// bayme some inline images. Retrieve first text/html subpart
+				// and list of all inline images
+			}
 		}
 		return null;
 	}
@@ -125,7 +148,7 @@ public class MailFactory
 	{
 		var label:Label = new Label();
 		label.percentWidth = 100;
-		label.setStyle("fontWeight", "bold");
+		label.setStyle("fontStyle", "italic");
 		label.text = text;
 		return label;
 	}
@@ -159,27 +182,5 @@ public class MailFactory
 		return lastOkMIME; // can be null
 	}
 	
-	/**
-	 *  Selects all child MIMEs that should be treated as attachments. Forwared
-	 *  mail is treated as attachment too. 
-	 */
-	public static function retrieveAttachments(mime:MIME):Array
-	{
-		var result:Array = [];
-		if (mime.type != "multipart" || mime.subtype != "mixed")
-			return result;
-		
-		var children:ArrayCollection = mime.children;
-		var n:int = children.length;
-		for (var i:int = 0; i < n; i++)
-		{
-			var childMIME:MIME = MIME(children.getItemAt(i));
-			if (childMIME.disposition == "attachment")// ||
-				//(childMIME.type == "message" && childMIME.subtype == "rfc822"))
-				result.push(childMIME);
-		}
-		return result;
-	}
-
 }
 }

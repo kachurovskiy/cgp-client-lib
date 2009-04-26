@@ -24,6 +24,7 @@ import com.cgpClient.CGPUtils;
 import com.cgpClient.mail.actions.MailFlagAction;
 import com.cgpClient.mail.mime.MIME;
 
+import flash.events.Event;
 import flash.events.EventDispatcher;
 
 import mx.collections.ArrayCollection;
@@ -133,13 +134,22 @@ public class Mail extends EventDispatcher
 	
 	public var bcc:Array = [];
 	
-	public var mime:MIME;
+	private var _mime:MIME;
 	
-	/**
-	 *  Collection of message parts, ex. forwarder messages. Is populated only
-	 *  when actual part is activated somehow.
-	 */
-	public var parts:ArrayCollection = new ArrayCollection();
+	[Bindable("mimeChange")]
+	public function get mime():MIME
+	{
+		return _mime;
+	}
+	
+	public function set mime(value:MIME):void
+	{
+		if (_mime == value)
+			return;
+		
+		_mime = value;
+		dispatchEvent(new Event("mimeChange"));
+	}
 	
 	public var priority:String;
 	
@@ -184,127 +194,85 @@ public class Mail extends EventDispatcher
 	 *      <From>Other Name</From>
 	 *  </folderReport>
 	 * 
-	 *  <EMail>
-	 *       <... />
+	 *  <EMail partID="02-01-04">
+	 *      <X-Junk-Score>0 []</X-Junk-Score>
+	 *      <... />
 	 *  </EMail>
 	 */
 	public function update(xml:XML):void
 	{
 		if (xml.hasOwnProperty("@UID"))
 			uid = xml.@UID;
-		if (xml.hasOwnProperty("@partID") && partId != xml.@partID)
+		if (xml.hasOwnProperty("@partID"))
+			partId = xml.@partID;
+		
+		
+		if (xml.hasOwnProperty("@index"))
+			index = xml.@index;
+		if (xml.FLAGS.length() > 0)
 		{
-			var xmlPartId:String = xml.@partID;
-			
-			// if all this node about some parent partId or the main mail, skip it
-			if (partId && partId.indexOf(xmlPartId) == 0)
-				return;
-			
-			// if all this node is about this node, we wouldn't be here
-			
-			// else - this node is about child partId. 
-			// 1. If it's our direct child - create it if it doesn't exist, or update if it exists
-			// 2. Else just pass the whole XML to the child, that is on the path
-			//    to the target path. If that child does not exist, create it.
-			
-			// 1 & 2
-			var childMail:Mail;
-			var nextPartId:String;
-			if (!partId)
-				nextPartId = xmlPartId.substr(0, 2);
+			var flagsString:String = xml.FLAGS;
+			if (flagsString.length > 0)
+				flags = flagsString.split(",");
 			else
-				nextPartId = xmlPartId.substr(0, partId.length + 3);
-			childMail = getPart(nextPartId);
-			if (!childMail)
-			{
-				childMail = new Mail();
-				childMail.partId = nextPartId;
-				childMail.folder = folder;
-				childMail.uid = uid;
-				childMail.update(xml);
-				parts.addItem(childMail);
-			}
-			else
-			{
-				childMail.update(xml);
-			}
+				flags = [];
 		}
-		else
+		
+		if (xml.EMail.length() > 0)
+			xml = xml.EMail[0];
+		
+		var dateXML:XML = xml.Date.length() > 0 ? xml.Date[0] : null;
+		if (dateXML) // <Date localTime="20090404T015200" timeShift="14400">20090403T215200Z</Date>
 		{
-			if (xml.hasOwnProperty("@index"))
-				index = xml.@index;
-			if (xml.FLAGS.length() > 0)
+			timeShift = dateXML.hasOwnProperty("@timeShift") ? int(dateXML.@timeShift) : 0;
+			date = CGPUtils.dateFromString(dateXML.toString());
+		}
+		if (xml.From.length() > 0)
+			from = Person.fromXML(xml.From[0]);
+		if (xml.Subject.length() > 0)
+			subject = xml.Subject;
+		if (xml.Pty.length() > 0)
+			priority = xml.Pty;
+		var person:Person;
+		var array:Array;
+		if (xml.To.length() > 0)
+		{
+			array = [];
+			for each (var toNode:XML in xml.To)
 			{
-				var flagsString:String = xml.FLAGS;
-				if (flagsString.length > 0)
-					flags = flagsString.split(",");
-				else
-					flags = [];
+				person = Person.fromXML(toNode);
+				array.push(person);
 			}
-			
-			if (xml.EMail.length() > 0)
-				xml = xml.EMail[0];
-			
-			var dateXML:XML = xml.Date.length() > 0 ? xml.Date[0] : null;
-			if (dateXML) // <Date localTime="20090404T015200" timeShift="14400">20090403T215200Z</Date>
+			toValue = array;
+		}
+		if (xml.Cc.length() > 0)
+		{
+			array = [];
+			for each (var ccNode:XML in xml.Cc)
 			{
-				timeShift = dateXML.hasOwnProperty("@timeShift") ? int(dateXML.@timeShift) : 0;
-				date = CGPUtils.dateFromString(dateXML.toString());
+				person = Person.fromXML(ccNode);
+				array.push(person);
 			}
-			if (xml.From.length() > 0)
-				from = Person.fromXML(xml.From[0]);
-			if (xml.Subject.length() > 0)
-				subject = xml.Subject;
-			if (xml.Pty.length() > 0)
-				priority = xml.Pty;
-			var person:Person;
-			var array:Array;
-			if (xml.To.length() > 0)
+			cc = array;
+		}
+		if (xml.Bcc.length() > 0)
+		{
+			array = [];
+			for each (var bccNode:XML in xml.Bcc)
 			{
-				array = [];
-				for each (var toNode:XML in xml.To)
-				{
-					person = Person.fromXML(toNode);
-					array.push(person);
-				}
-				toValue = array;
+				person = Person.fromXML(bccNode);
+				array.push(person);
 			}
-			if (xml.Cc.length() > 0)
-			{
-				array = [];
-				for each (var ccNode:XML in xml.Cc)
-				{
-					person = Person.fromXML(ccNode);
-					array.push(person);
-				}
-				cc = array;
-			}
-			if (xml.Bcc.length() > 0)
-			{
-				array = [];
-				for each (var bccNode:XML in xml.Bcc)
-				{
-					person = Person.fromXML(bccNode);
-					array.push(person);
-				}
-				bcc = array;
-			}
-			if (xml.MIME.length() > 0)
-			{
-				mime = new MIME(xml.MIME[0]);
-				
-				var mimeChildren:ArrayCollection = mime.children;
-				var n:int = mimeChildren.length;
-				for (var i:int = 0; i < n; i++)
-				{
-					var mimeChild:MIME = MIME(mimeChildren.getItemAt(i));
-					if (mimeChild.type == "message" && mimeChild.subtype == "rfc822" &&
-						mimeChild.partId)
-					{
-						update(mimeChild.xml);
-					}
-				}
-			}
+			bcc = array;
+		}
+		if (xml.MIME.length() > 0)
+		{
+			if (status == PREVIEW)
+				status = VIEW;
+			var newMIME:MIME = new MIME();
+			newMIME.mail = this;
+			newMIME.update(xml.MIME[0]);
+			mime = newMIME;
 		}
 	}
 	
@@ -343,8 +311,6 @@ public class Mail extends EventDispatcher
 		}
 		if (mime)
 		{
-			if (status == PREVIEW)
-				status = VIEW;
 			node = mime.toXML();
 			xml.appendChild(node);
 		}
@@ -352,14 +318,15 @@ public class Mail extends EventDispatcher
 		return xml;
 	}
 	
-	public function getPart(partId:String):Mail
+	public function getPart(partId:String):MIME
 	{
-		var n:int = parts.length;
+		var mimeChildren:ArrayCollection = mime.children;
+		var n:int = mimeChildren.length;
 		for (var i:int = 0; i < n; i++)
 		{
-			var part:Mail = Mail(parts.getItemAt(i));
-			if (part.partId == partId)
-				return part;
+			var mimeChild:MIME = MIME(mimeChildren.getItemAt(i));
+			if (mimeChild.partId == partId)
+				return mimeChild;
 		}
 		return null;
 	}

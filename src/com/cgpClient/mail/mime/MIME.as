@@ -28,6 +28,8 @@ import mx.collections.ArrayCollection;
 public class MIME
 {
 	
+	public var mail:Mail;
+	
 	public var partId:String;
 	
 	public var estimatedSize:int;
@@ -57,6 +59,10 @@ public class MIME
 	public var children:ArrayCollection = new ArrayCollection(); 
 		/* contains MIMEs, EMails and other Objects */
 	
+	public var readError:String;
+	
+	public var parseError:String;
+	
 	private var _xml:XML;
 	
 	public function get xml():XML
@@ -70,12 +76,58 @@ public class MIME
 			update(xml);
 	}
 	
+	/**
+	 *  Selects all child MIMEs that should be treated as attachments. Forwared
+	 *  mail is not meant as attachment.
+	 * 
+	 *  @return Array of MIME
+	 */
+	public function getAttachments():Array
+	{
+		var result:Array = [];
+		if (type != "multipart" || subtype != "mixed")
+			return result;
+		
+		var n:int = children.length;
+		for (var i:int = 0; i < n; i++)
+		{
+			var childMIME:MIME = MIME(children.getItemAt(i));
+			if (childMIME.disposition == "attachment")// ||
+				//(childMIME.type == "message" && childMIME.subtype == "rfc822"))
+				result.push(childMIME);
+		}
+		return result;
+	}
+
+	/**
+	 *  Selects all child MIMEs that should be treated as forwarded mail. 
+	 * 
+	 *  @return Array of MIME
+	 */
+	public function getForwards():Array
+	{
+		var result:Array = [];
+		if (type != "multipart" || subtype != "mixed")
+			return result;
+		
+		var n:int = children.length;
+		for (var i:int = 0; i < n; i++)
+		{
+			var childMIME:MIME = MIME(children.getItemAt(i));
+			var childMIMEChildren:ArrayCollection = childMIME.children;
+			if (childMIME.type == "message" && childMIME.subtype == "rfc822" &&
+				childMIMEChildren.length > 0 && childMIMEChildren.getItemAt(0) is Mail)
+				result.push(childMIME);
+		}
+		return result;
+	}
+
 	public function toString():String
 	{
 		return children.source.join("\n-------------------------------------------\n");
 	}
 	
-	private function update(xml:XML):void
+	public function update(xml:XML):void
 	{
 		_xml = xml;
 		
@@ -99,6 +151,10 @@ public class MIME
 			location = xml.@location;
 		if (xml.hasOwnProperty("@class"))
 			classValue = xml["@class"];
+		if (xml.hasOwnProperty("@readError"))
+			readError = xml.@readError;
+		if (xml.hasOwnProperty("@parseError"))
+			parseError = xml.@parseError;
 		
 		// fill dispositions and types
 		for each (var attribute:XML in xml.attributes())
@@ -115,15 +171,20 @@ public class MIME
 		{
 			for each (var node:XML in xml.children())
 			{
-				var childMIME:MIME = new MIME(node);
+				var childMIME:MIME = new MIME();
+				childMIME.mail = mail;
+				childMIME.update(node);
 				children.addItem(childMIME);
 			}
 		}
 		else if ((type == "message" && subtype == "rfc822") ||
 			(type == "text" && subtype == "rfc822-headers"))
 		{
-			var mail:Mail = new Mail(xml.EMail[0]);
-			children.addItem(mail);
+			var childMail:Mail = new Mail();
+			childMail.folder = mail.folder;
+			childMail.uid = mail.uid;
+			childMail.update(xml.EMail[0]);
+			children.addItem(childMail);
 		}
 		else if (type == "text" && (subtype == "directory" || subtype == "x-vcard"))
 		{
