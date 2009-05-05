@@ -22,6 +22,8 @@ package com.cgpClient.net
 {
 
 import flash.events.EventDispatcher;
+import flash.events.TimerEvent;
+import flash.utils.Timer;
 
 /**
  *  <code>Net</code> class connects to CommuniGate Pro
@@ -83,11 +85,12 @@ public class Net
 		var object:Object;
 		var i:int;
 		var n:int;
-		if (_status == NetStatus.LOGGED_IN) // report error on all XIMSS calls
+		if (_status == NetStatus.LOGGED_IN)
 		{
 			requests = {};
 			dataCallBacks = {};
 			
+			// report error on all XIMSS calls
 			var error:Error = new Error("Connection was lost");
 			var noCallBackError:Error = Error("Request " + p + " does not have response " + 
 				" callback to handle error: " + error.message);
@@ -117,8 +120,9 @@ public class Net
 		var oldStatus:String = _status;
 		_status = value;
 
-		if (_status == NetStatus.LOGGED_IN) // send all cached requests
+		if (_status == NetStatus.LOGGED_IN)
 		{
+			// send all cached requests
 			n = cachedXIMSS.length;
 			for (i = 0; i < n; i++)
 			{
@@ -126,6 +130,12 @@ public class Net
 				ximss(object.xml, object.dataCallBack, object.responseCallBack);
 			}
 			cachedXIMSS = [];
+			
+			keepAlive = true;
+		}
+		else
+		{
+			keepAlive = false;
 		}
 		
 		dispatcher.dispatchEvent(new NetEvent(NetEvent.STATUS, oldStatus, _status, statusError));
@@ -238,6 +248,44 @@ public class Net
 	private static var failoverScheme:Array;
 	private static var failoverIndex:int;
 	
+	//--------------------------------------
+	//  keepAlive
+	//--------------------------------------
+
+	private static var _keepAlive:Boolean = false;
+	private static var keepAliveTimer:Timer;
+	private static var keepAliveRequest:XML = <noop/>;
+
+	/**
+	 *  To send or not keep-alive commands every few minutes.
+	 */
+	private static function get keepAlive():Boolean
+	{
+		return _keepAlive;
+	}
+
+	private static function set keepAlive(value:Boolean):void
+	{
+		if (_keepAlive == value)
+			return;
+		
+		_keepAlive = value;
+		
+		if (_keepAlive)
+		{
+			if (!keepAliveTimer)
+			{
+				keepAliveTimer = new Timer(4.5 * 60 * 1000); // 4.5 minutes
+				keepAliveTimer.addEventListener(TimerEvent.TIMER, keepAliveTimer_timerHandler);
+			}
+			keepAliveTimer.start();
+		}
+		else
+		{
+			keepAliveTimer.stop();	
+		}
+	}
+
 	//--------------------------------------------------------------------------
 	//
 	//  Constructor
@@ -465,6 +513,14 @@ public class Net
 		}
 	}
 	
+	private static function keepAliveResponseCallBack(object:Object):void {}
+	
+	//--------------------------------------------------------------------------
+	//
+	//  Static event handlers
+	//
+	//--------------------------------------------------------------------------
+
 	private static function channel_statusHandler(event:ChannelEvent):void
 	{
 		var newStatus:String = event.newStatus;
@@ -545,6 +601,11 @@ public class Net
 			var ximssEvent:XIMSSAsyncEvent = new XIMSSAsyncEvent("ximss-" + name, xml);
 			dispatcher.dispatchEvent(ximssEvent);
 		}
+	}
+	
+	private static function keepAliveTimer_timerHandler(event:TimerEvent):void
+	{
+		ximss(keepAliveRequest, null, keepAliveResponseCallBack); 
 	}
 	
 }
