@@ -78,8 +78,10 @@ public class MailFactory
 		else if (type == "message" && (subtype == "disposition-notification" ||
 			subtype == "delivery-status"))
 		{
-			var mimeReportLabel:Label = createLabel("MIME Report, " + subtype);
-			return mimeReportLabel;
+			var mimeReportText:Text = createText();
+			mimeReportText.text = "MIME Report, subtype \"" + subtype + "\":\n" + 
+				mime.xml.toXMLString();
+			return mimeReportText;
 		}
 		else if (type == "text" && subtype == "calendar")
 		{
@@ -103,7 +105,7 @@ public class MailFactory
 			var n:int = children.length;
 			var i:int;
 			var childView:UIComponent;
-			if (subtype == "mixed" || subtype == "digest")
+			if (subtype == "mixed" || subtype == "digest" || subtype == "report")
 			{
 				var container:VBox = new VBox();
 				container.percentWidth = 100;
@@ -149,6 +151,7 @@ public class MailFactory
 		var label:Label = new Label();
 		label.percentWidth = 100;
 		label.setStyle("fontStyle", "italic");
+		label.setStyle("fontWeight", "bold");
 		label.text = text;
 		return label;
 	}

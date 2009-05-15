@@ -221,7 +221,7 @@ public class MIME
 	public function toXML():XML
 	{
 		if (type == "text" && subtype == "plain")
-			return <MIME type="text" subtype="plain">{children[0]}</MIME>;
+			return <MIME type="text" subtype="plain">{children.toArray().join("")}</MIME>;
 		throw new Error("Only text is implemented");
 		return null;
 	}
