@@ -39,15 +39,15 @@ public class FileListAction extends FileStorageAction
 		// if directory is already listed, here we should remembed it's current
 		// children and on request complete we should remove missing ones from
 		// FileStorage. But in this example we list File Storage only once.
-		Net.ximss(<fileList directory={directory}/>, dataCallBack, responseCallBack);
+		Net.ximss(<fileList directory={directory}/>, dataCallback, responseCallback);
 	}
 	
-	private function dataCallBack(xml:XML):void
+	private function dataCallback(xml:XML):void
 	{
 		fileStorage.update(xml);
 	}
 	
-	private function responseCallBack(object:Object):void
+	private function responseCallback(object:Object):void
 	{
 		var text:String = getErrorText(object);
 		if (text)

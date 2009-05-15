@@ -53,7 +53,7 @@ public class ExploreAction extends FileStorageAction
 		if (directoriesToList.length > 0)
 		{
 			var path:String = directoriesToList.shift();
-			Net.ximss(<fileList directory={path}/>, dataCallBack, responseCallBack);
+			Net.ximss(<fileList directory={path}/>, dataCallback, responseCallback);
 		}
 		else if (errors.length > 0)
 		{
@@ -65,7 +65,7 @@ public class ExploreAction extends FileStorageAction
 		}
 	}
 	
-	private function dataCallBack(xml:XML):void
+	private function dataCallback(xml:XML):void
 	{
 		var directory:FileStorageDirectory = fileStorage.update(xml) as 
 			FileStorageDirectory;
@@ -73,7 +73,7 @@ public class ExploreAction extends FileStorageAction
 			directoriesToList.push(directory.path);
 	}
 	
-	private function responseCallBack(object:Object):void
+	private function responseCallback(object:Object):void
 	{
 		var text:String = getErrorText(object);
 		if (text)

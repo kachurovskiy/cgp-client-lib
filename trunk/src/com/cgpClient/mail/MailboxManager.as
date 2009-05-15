@@ -73,12 +73,12 @@ public class MailboxManager
 		
 		if (_enabled)
 		{
-			Net.watch(ximssCallBack, dataCallBack, responseCallBack, asyncCallBack);
+			Net.watch(ximssCallback, dataCallback, responseCallback, asyncCallback);
 			Net.dispatcher.addEventListener(NetEvent.STATUS, statusHandler);
 		}
 		else
 		{
-			Net.unwatch(ximssCallBack, dataCallBack, responseCallBack, asyncCallBack);
+			Net.unwatch(ximssCallback, dataCallback, responseCallback, asyncCallback);
 			Net.dispatcher.removeEventListener(NetEvent.STATUS, statusHandler);
 			_mailboxes.removeAll();
 			_folders.removeAll();
@@ -115,9 +115,9 @@ public class MailboxManager
 		return null;
 	}
 	
-	private static function ximssCallBack(xml:XML):void {}
+	private static function ximssCallback(xml:XML):void {}
 	
-	private static function dataCallBack(xml:XML, originalXML:XML):void
+	private static function dataCallback(xml:XML, originalXML:XML):void
 	{
 		var name:String = xml.name();
 		var mailbox:Mailbox;
@@ -182,7 +182,7 @@ public class MailboxManager
 		}
 	}
 	
-	private static function responseCallBack(object:Object, originalXML:XML):void
+	private static function responseCallback(object:Object, originalXML:XML):void
 	{
 		var errorText:String = getErrorText(object);
 		if (errorText)
@@ -247,7 +247,7 @@ public class MailboxManager
 		}
 	}
 	
-	private static function asyncCallBack(xml:XML):void
+	private static function asyncCallback(xml:XML):void
 	{
 		
 	}
