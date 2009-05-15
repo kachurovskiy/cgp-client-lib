@@ -36,15 +36,15 @@ public class FileDirInfoAction extends FileStorageAction
 		
 		startRunning();
 		
-		Net.ximss(<fileDirInfo directory={directory}/>, dataCallBack, responseCallBack);
+		Net.ximss(<fileDirInfo directory={directory}/>, dataCallback, responseCallback);
 	}
 	
-	private function dataCallBack(xml:XML):void
+	private function dataCallback(xml:XML):void
 	{
 		fileStorage.update(xml);
 	}
 	
-	private function responseCallBack(object:Object):void
+	private function responseCallback(object:Object):void
 	{
 		var text:String = getErrorText(object);
 		if (text)

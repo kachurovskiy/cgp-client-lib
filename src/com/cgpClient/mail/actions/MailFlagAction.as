@@ -112,7 +112,7 @@ public class MailFlagAction
 			flags={difference(effectiveFlags, justSentFlags)}>
 			<UID>{mail.uid}</UID>
 		</messageMark>;
-		Net.ximss(xml, null, reponseCallBack); 
+		Net.ximss(xml, null, reponseCallback); 
 	}
 	
 	private function difference(flags1:Array, flags2:Array):String
@@ -139,7 +139,7 @@ public class MailFlagAction
 		return result.join(",");
 	}
 	
-	private function reponseCallBack(object:Object):void
+	private function reponseCallback(object:Object):void
 	{
 		if (!getErrorText(object))
 			effectiveFlags = justSentFlags;

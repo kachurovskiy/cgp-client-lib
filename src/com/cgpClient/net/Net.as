@@ -88,31 +88,31 @@ public class Net
 		if (_status == NetStatus.LOGGED_IN)
 		{
 			requests = {};
-			dataCallBacks = {};
+			dataCallbacks = {};
 			
 			// report error on all XIMSS calls
 			var error:Error = new Error("Connection was lost");
-			var noCallBackError:Error = Error("Request " + p + " does not have response " + 
+			var noCallbackError:Error = Error("Request " + p + " does not have response " + 
 				" callback to handle error: " + error.message);
-			for (var p:String in responseCallBacks)
+			for (var p:String in responseCallbacks)
 			{
-				var callBack:Function = responseCallBacks[p];
-				delete responseCallBacks[p];
-				if (callBack == null)
-					throw noCallBackError;
-				callBack(error);
+				var callback:Function = responseCallbacks[p];
+				delete responseCallbacks[p];
+				if (callback == null)
+					throw noCallbackError;
+				callback(error);
 			}
-			responseCallBacks = {};
+			responseCallbacks = {};
 			ximssId = 0;
 			
 			n = cachedXIMSS.length;
 			for (i = 0; i < n; i++)
 			{
 				object = cachedXIMSS[i];
-				if (object.responseCallBack)
-					object.responseCallBack(error);
+				if (object.responseCallback)
+					object.responseCallback(error);
 				else
-					throw noCallBackError; 
+					throw noCallbackError; 
 			}
 			cachedXIMSS = [];
 		}
@@ -127,7 +127,7 @@ public class Net
 			for (i = 0; i < n; i++)
 			{
 				object = cachedXIMSS[i];
-				ximss(object.xml, object.dataCallBack, object.responseCallBack);
+				ximss(object.xml, object.dataCallback, object.responseCallback);
 			}
 			cachedXIMSS = [];
 			
@@ -236,10 +236,10 @@ public class Net
 	
 	private static var ximssId:int = 0;
 	private static var requests:Object; /* String -> XML */
-	private static var dataCallBacks:Object; /* String -> Function */
-	private static var responseCallBacks:Object; /* String -> Function */
+	private static var dataCallbacks:Object; /* String -> Function */
+	private static var responseCallbacks:Object; /* String -> Function */
 	private static var cachedXIMSS:Array = []; /* of Object with props xml, 
-		dataCallBack, responseCallBack */
+		dataCallback, responseCallback */
 	private static var watchers:Array = []; /* of Object with prors from watch() */
 	
 	private static var host:String;
@@ -337,8 +337,8 @@ public class Net
 			setNextChannel();
 		
 		requests = {};
-		dataCallBacks = {};
-		responseCallBacks = {};
+		dataCallbacks = {};
+		responseCallbacks = {};
 		
 		setStatus(NetStatus.LOGGING_IN);
 		
@@ -353,9 +353,9 @@ public class Net
 	 *  <p><strong>Example: sending IM</strong>
 	 *  <listing>
 	 *  Net.ximss(&lt;sendIM peer="maxim&#64;communigate.com"&gt;Hey, your lib really works!&lt;/sendIM&gt;,
-	 * 	    null, responseCallBack);
+	 * 	    null, responseCallback);
 	 * 
-	 *  function responseCallBack(object:Object):void
+	 *  function responseCallback(object:Object):void
 	 *  {
 	 *      var text:String = getErrorText(object);
 	 *      if (text) // IM was not sent, show error 
@@ -366,14 +366,14 @@ public class Net
 	 *  <p><strong>Example: reading mail body</strong>
 	 *  <listing>
 	 *  Net.ximss(&lt;folderRead folder={Model.instance.folder.name} 
-	 *      uid={mail.uid} totalSizeLimit={10485760}/&gt;, dataCallBack, responseCallBack);
+	 *      uid={mail.uid} totalSizeLimit={10485760}/&gt;, dataCallback, responseCallback);
 	 *   
-	 *  private function dataCallBack(xml:XML):void
+	 *  private function dataCallback(xml:XML):void
 	 *  {
 	 *      mail.update(xml);
 	 *  }
 	 * 
-	 *  private function responseCallBack(object:Object):void
+	 *  private function responseCallback(object:Object):void
 	 *  {
 	 *      var text:String = getErrorText(object);	
 	 *      if (text)
@@ -389,24 +389,24 @@ public class Net
 	 *  </listing>
 	 * 
 	 *  @param xml Synchronous request XML.
-	 *  @param dataCallBack Data callback.
-	 *  @param responseCallBack Response or error callback.
+	 *  @param dataCallback Data callback.
+	 *  @param responseCallback Response or error callback.
 	 */
-	public static function ximss(xml:XML, dataCallBack:Function, responseCallBack:Function):void
+	public static function ximss(xml:XML, dataCallback:Function, responseCallback:Function):void
 	{
 		if (_status == NetStatus.LOGGED_IN)
 		{
 			var name:String = xml.name(); 
 			requests[ximssId] = xml;
-			dataCallBacks[ximssId] = dataCallBack;
-			responseCallBacks[ximssId] = responseCallBack;
+			dataCallbacks[ximssId] = dataCallback;
+			responseCallbacks[ximssId] = responseCallback;
 			xml.@id = ximssId;
 			ximssId++;
 			
 			for each (var watcher:Object in watchers)
 			{
-				if (watcher.sendCallBack)
-					watcher.sendCallBack(xml);
+				if (watcher.sendCallback)
+					watcher.sendCallback(xml);
 			}
 			
 			_channel.send(xml);
@@ -416,8 +416,8 @@ public class Net
 			cachedXIMSS.push(
 				{
 					xml: xml, 
-					dataCallBack: dataCallBack, 
-					responseCallBack: responseCallBack 
+					dataCallback: dataCallback, 
+					responseCallback: responseCallback 
 				});
 		}
 		else
@@ -434,26 +434,26 @@ public class Net
 	 *  utilizes this functionality to watch all information about mailboxes 
 	 *  and folders.
 	 * 
-	 *  @param ximssCallBack Called each time <code>ximss()</code>
+	 *  @param ximssCallback Called each time <code>ximss()</code>
 	 *  function is called. Signature - <code>function(xml:XML):void</code>.
 	 * 
-	 *  @param dataCallBack Function is called each time regular data handler is 
+	 *  @param dataCallback Function is called each time regular data handler is 
 	 *  called, before it. Signature - <code>function(xml:XML, originalXML:XML):void</code>.
 	 * 
-	 *  @param dataCallBack Function is called each regular response handler is 
+	 *  @param dataCallback Function is called each regular response handler is 
 	 *  called, before it. Signature - <code>function(object:Object, originalXML:XML):void</code>.
 	 * 
-	 *  @param dataCallBack Function is called each time asynchronous message 
+	 *  @param dataCallback Function is called each time asynchronous message 
 	 *  arrive, before event dispacth. Signature - <code>function(xml:XML):void</code>.
 	 */
-	public static function watch(ximssCallBack:Function, dataCallBack:Function, 
-		responseCallBack:Function, asyncCallBack:Function):void
+	public static function watch(ximssCallback:Function, dataCallback:Function, 
+		responseCallback:Function, asyncCallback:Function):void
 	{
 		var object:Object = {};
-		object.ximssCallBack = ximssCallBack;
-		object.dataCallBack = dataCallBack;
-		object.responseCallBack = responseCallBack;
-		object.asyncCallBack = asyncCallBack;
+		object.ximssCallback = ximssCallback;
+		object.dataCallback = dataCallback;
+		object.responseCallback = responseCallback;
+		object.asyncCallback = asyncCallback;
 		
 		watchers.push(object);
 	}
@@ -461,17 +461,17 @@ public class Net
 	/**
 	 *  Removes watcher that was added using <code>watch()</code> method.
 	 */
-	public static function unwatch(ximssCallBack:Function, dataCallBack:Function, 
-		responseCallBack:Function, asyncCallBack:Function):void
+	public static function unwatch(ximssCallback:Function, dataCallback:Function, 
+		responseCallback:Function, asyncCallback:Function):void
 	{
 		var n:int = watchers.length;
 		for (var i:int = n; i >= 0; i++)
 		{
 			var object:Object = watchers[i];
-			if (object.ximssCallBack == ximssCallBack &&
-				object.dataCallBack == dataCallBack &&
-				object.responseCallBack == responseCallBack &&
-				object.asyncCallBack == asyncCallBack)
+			if (object.ximssCallback == ximssCallback &&
+				object.dataCallback == dataCallback &&
+				object.responseCallback == responseCallback &&
+				object.asyncCallback == asyncCallback)
 				watchers.splice(i, 1);
 		}
 	}
@@ -513,7 +513,7 @@ public class Net
 		}
 	}
 	
-	private static function keepAliveResponseCallBack(object:Object):void {}
+	private static function keepAliveResponseCallback(object:Object):void {}
 	
 	//--------------------------------------------------------------------------
 	//
@@ -563,39 +563,39 @@ public class Net
 			{
 				for each (watcher in watchers)
 				{
-					if (watcher.dataCallBack)
-						watcher.dataCallBack(xml, requests[id]);
+					if (watcher.dataCallback)
+						watcher.dataCallback(xml, requests[id]);
 				}
 				
-				var dataCallBack:Function = dataCallBacks[id];
-				if (dataCallBack != null)
-					dataCallBack(xml);
+				var dataCallback:Function = dataCallbacks[id];
+				if (dataCallback != null)
+					dataCallback(xml);
 			}
 			else
 			{
 				for each (watcher in watchers)
 				{
-					if (watcher.responseCallBack)
-						watcher.responseCallBack(xml, requests[id]);
+					if (watcher.responseCallback)
+						watcher.responseCallback(xml, requests[id]);
 				}
 
-				var responseCallBack:Function = responseCallBacks[id];
-				if (responseCallBack != null)
-					responseCallBack(xml);
+				var responseCallback:Function = responseCallbacks[id];
+				if (responseCallback != null)
+					responseCallback(xml);
 					
 				delete requests[id];
-				if (dataCallBacks.hasOwnProperty(id))
-					delete dataCallBacks[id];
-				if (responseCallBacks.hasOwnProperty(id))
-					delete responseCallBacks[id];
+				if (dataCallbacks.hasOwnProperty(id))
+					delete dataCallbacks[id];
+				if (responseCallbacks.hasOwnProperty(id))
+					delete responseCallbacks[id];
 			}
 		}
 		else // asyns message
 		{
 			for each (watcher in watchers)
 			{
-				if (watcher.asyncCallBack)
-					watcher.asyncCallBack(xml);
+				if (watcher.asyncCallback)
+					watcher.asyncCallback(xml);
 			}
 
 			var ximssEvent:XIMSSAsyncEvent = new XIMSSAsyncEvent("ximss-" + name, xml);
@@ -605,7 +605,7 @@ public class Net
 	
 	private static function keepAliveTimer_timerHandler(event:TimerEvent):void
 	{
-		ximss(keepAliveRequest, null, keepAliveResponseCallBack); 
+		ximss(keepAliveRequest, null, keepAliveResponseCallback); 
 	}
 	
 }

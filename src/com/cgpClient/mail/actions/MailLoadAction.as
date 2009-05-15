@@ -38,10 +38,10 @@ public class MailLoadAction
 			uid={mail.uid} totalSizeLimit={10 * 1000 * 1000}/>;
 		if (mail.partId)
 			xml.@partID = mail.partId;
-		Net.ximss(xml, null, responseCallBack);
+		Net.ximss(xml, null, responseCallback);
 	}
 	
-	private function responseCallBack(object:Object):void
+	private function responseCallback(object:Object):void
 	{
 		var text:String = getErrorText(object);	
 		if (text)

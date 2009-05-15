@@ -28,10 +28,10 @@ package com.cgpClient.net
  *  <listing>
  *  function someAction():void
  *  {
- *      Net.ximss(&lt;folderOpen ... /&gt;, dataCallBack, responseCallBack); 
+ *      Net.ximss(&lt;folderOpen ... /&gt;, dataCallback, responseCallback); 
  *  }
  * 
- *  function responseCallBack(object:Object):void
+ *  function responseCallback(object:Object):void
  *  {
  *      var text:String = getErrorText(object);
  *      if (text)

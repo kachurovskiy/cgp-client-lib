@@ -161,7 +161,7 @@ public class Mail extends EventDispatcher
 			update(xml);
 	}
 	
-	/**
+	/*
 	 *  <folderMessage folder="INBOX" id="A38" UID="4422">
 	 *      <EMail>
 	 *          <X-Junk-Score>0 []</X-Junk-Score>
