@@ -24,7 +24,7 @@ import flash.events.EventDispatcher;
 import flash.utils.getQualifiedClassName;
 
 [Event(name="data", type="com.cgpClient.net.ChannelEvent")]
-[Event(name="error", type="com.cgpClient.net.ChannelEvent")]
+[Event(name="error", type="flash.events.ErrorEvent")]
 [Event(name="status", type="com.cgpClient.net.ChannelEvent")]
 /**
  *  @private
@@ -57,7 +57,7 @@ public class Channel extends EventDispatcher
 	
 	public function set status(value:String):void
 	{
-		if (_status == value)
+		if (_status == value && !statusError)
 			return;
 		
 		var oldStatus:String = _status;

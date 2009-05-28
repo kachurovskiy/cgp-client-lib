@@ -23,7 +23,6 @@ package com.cgpClient.net
 import com.adobe.crypto.HMAC;
 import com.hurlant.util.Base64;
 
-import flash.events.DataEvent;
 import flash.events.ErrorEvent;
 import flash.events.Event;
 import flash.events.IOErrorEvent;
@@ -163,36 +162,30 @@ public class XIMSSSocket extends Channel
 	{
 		var startLength:int = readBuffed.length;
 		socket.readBytes(readBuffed, readBuffed.length, socket.bytesAvailable);
-		var newLength:int = readBuffed.length;
-		readBuffed.position = startLength;
-		var lastZero:int = 0;
-		var lastByte:int;
-		for (var i:int = startLength; i <= newLength; i++)
+		var finishedString:Boolean = true;
+		while (readBuffed.position < readBuffed.length)
 		{
-			if (readBuffed.bytesAvailable == 0)
-				break;
+			var positionBefore:int = readBuffed.position;
+			var text:String = readBuffed.readUTFBytes(readBuffed.length - readBuffed.position);
 			
-			lastByte = readBuffed.readByte();
-			if (lastByte == 0 && lastZero + 1 == i)
+			var temp:ByteArray = new ByteArray();
+			temp.writeUTFBytes(text); 
+			readBuffed.position = positionBefore + temp.length + 1;
+			
+			if (readBuffed.position == readBuffed.length + 1)
 			{
-				lastZero++;
+				finishedString = false;
+				readBuffed.position = positionBefore;
+				break;
 			}
-			else if (lastByte == 0)
-			{
-				readBuffed.position = lastZero;
-				var text:String = readBuffed.readUTFBytes(i - lastZero);
 
-				var traceText:String = text.split("\n").join("\\n");
-				traceText = traceText.split("\t").join("\\t");
-				trace("S: " + traceText);
+			var traceText:String = text.split("\n").join("\\n");
+			traceText = traceText.split("\t").join("\\t");
+			trace("S: " + traceText);
 
-				dataParserHandler(text);
-				
-				readBuffed.position = i;
-				lastZero = i;
-			}
+			dataParserHandler(text);
 		}
-		if (lastByte == 0)
+		if (finishedString)
 			readBuffed = new ByteArray();
 	}
 	
