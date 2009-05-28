@@ -465,14 +465,17 @@ public class Net
 		responseCallback:Function, asyncCallback:Function):void
 	{
 		var n:int = watchers.length;
-		for (var i:int = n; i >= 0; i++)
+		for (var i:int = n - 1; i >= 0; i--)
 		{
 			var object:Object = watchers[i];
 			if (object.ximssCallback == ximssCallback &&
 				object.dataCallback == dataCallback &&
 				object.responseCallback == responseCallback &&
 				object.asyncCallback == asyncCallback)
+			{
 				watchers.splice(i, 1);
+				return;
+			}
 		}
 	}
 	

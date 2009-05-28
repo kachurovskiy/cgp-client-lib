@@ -23,7 +23,6 @@ package com.cgpClient.net
 import com.adobe.crypto.HMAC;
 import com.hurlant.util.Base64;
 
-import flash.events.DataEvent;
 import flash.events.ErrorEvent;
 import flash.events.Event;
 import flash.events.IOErrorEvent;
@@ -238,7 +237,7 @@ public class HTTPBinding extends Channel
 		var url:String = "http://" + host + (port == 80 ? "" : ":" + port);
 		var urlRequest:URLRequest;
 		
-		if (xml.indexOf("<listFeatures") == 0)
+		if (!sessionId)
 			url += "/ximsslogin/";
 		else
 			url += "/Session/" + sessionId + "/sync"; 
@@ -309,7 +308,7 @@ public class HTTPBinding extends Channel
 				throw new Error(xml);
 			}
 		}
-		else if (status == ChannelStatus.LOGGED_IN)
+		else
 		{
 			for each (var node:XML in xml.children())
 			{

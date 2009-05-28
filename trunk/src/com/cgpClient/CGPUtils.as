@@ -10,7 +10,7 @@ public class CGPUtils
 	 *  Parses date from "20090404T015200" or "20090403T215200Z" to 
 	 *  <code>Date</code>
 	 */
-	public static function dateFromString(string:String, timeShift:int = 0):Date
+	public static function dateFromString(string:String):Date
 	{
 		var length:int = string.length;
 		if ((length != 15 && length != 16) || string.charAt(8) != "T")
