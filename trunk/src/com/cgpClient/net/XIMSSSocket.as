@@ -172,7 +172,7 @@ public class XIMSSSocket extends Channel
 			temp.writeUTFBytes(text); 
 			readBuffed.position = positionBefore + temp.length + 1;
 			
-			if (readBuffed.position == readBuffed.length + 1)
+			if (readBuffed.position > readBuffed.length)
 			{
 				finishedString = false;
 				readBuffed.position = positionBefore;
