@@ -179,7 +179,7 @@ public class Net
 	 */
 	public static function get loginData():Array
 	{
-		return channel.loginData;
+		return _channel ? _channel.loginData : null;
 	}
 	
 	//--------------------------------------
