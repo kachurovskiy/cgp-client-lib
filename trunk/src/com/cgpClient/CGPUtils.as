@@ -18,7 +18,7 @@ public class CGPUtils
 		
 		var date:Date = new Date();
 		var year:int = int(string.substring(0, 4));
-		var month:int = int(string.substring(4, 6));
+		var month:int = int(string.substring(4, 6)) - 1;
 		var day:int = int(string.substring(6, 8));
 		var hour:int = int(string.substring(9, 11));
 		var minute:int = int(string.substring(11, 13));

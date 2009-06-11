@@ -405,8 +405,8 @@ public class Net
 			
 			for each (var watcher:Object in watchers)
 			{
-				if (watcher.sendCallback)
-					watcher.sendCallback(xml);
+				if (watcher.ximssCallback)
+					watcher.ximssCallback(xml);
 			}
 			
 			_channel.send(xml);
