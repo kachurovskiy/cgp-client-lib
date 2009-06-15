@@ -83,7 +83,7 @@ public class XIMSSSocket extends Channel
 		status = ChannelStatus.CONNECTING;
 		try
 		{
-			trace("C: starting socket on " + host + ":" + port);
+			Net.traceFunction("C", "starting socket on " + host + ":" + port);
 			socket.connect(host, port);
 		}
 		catch (error:Error)
@@ -118,7 +118,7 @@ public class XIMSSSocket extends Channel
 			
 			text = text.split("\n").join("\\n");
 			text = text.split("\t").join("\\t");
-			trace("C: " + text);
+			Net.traceFunction("C", text);
 		}
 		else
 		{
@@ -181,7 +181,7 @@ public class XIMSSSocket extends Channel
 
 			var traceText:String = text.split("\n").join("\\n");
 			traceText = traceText.split("\t").join("\\t");
-			trace("S: " + traceText);
+			Net.traceFunction("S", traceText);
 
 			dataParserHandler(text);
 		}
