@@ -126,7 +126,7 @@ public class HTTPBinding extends Channel
 		try
 		{
 			var urlRequest:URLRequest = getURLRequest("<listFeatures id='connecting'/>"); 
-			trace("C: connectingLoader: " + urlRequest.url + " | " + urlRequest.data);
+			Net.traceFunction("C", "connectingLoader: " + urlRequest.url + " | " + urlRequest.data);
 			connectingLoader.load(urlRequest);
 		}
 		catch (error:Error)
@@ -170,7 +170,7 @@ public class HTTPBinding extends Channel
 		}
 		urlLoaderQueue = [];
 		var urlRequest:URLRequest = getURLRequest(string);
-		trace("C: urlLoader: " + urlRequest.url + " | " + urlRequest.data);
+		Net.traceFunction("C", "urlLoader: " + urlRequest.url + " | " + urlRequest.data);
 		urlLoader.load(urlRequest);
 	}
 	
@@ -228,7 +228,7 @@ public class HTTPBinding extends Channel
 		
 		urlRequest.method = URLRequestMethod.POST;
 		
-		trace("C: " + url + " | " + urlVariables.toString());
+		Net.traceFunction("C", url + " | " + urlVariables.toString());
 		urlLoader.load(urlRequest);
 	}
 	
@@ -253,7 +253,7 @@ public class HTTPBinding extends Channel
 	private function callAsync():void
 	{
 		asyncLoaderRequest.url = asyncBase + ackSeq;
-		trace("C: asyncLoader: " + asyncLoaderRequest.url + " | " + asyncLoaderRequest.data);
+		Net.traceFunction("C", "asyncLoader: " + asyncLoaderRequest.url + " | " + asyncLoaderRequest.data);
 		asyncLoader.load(asyncLoaderRequest);
 	}
 	
@@ -265,7 +265,7 @@ public class HTTPBinding extends Channel
 	
 	private function connectingLoader_completeHandler(event:Event):void
 	{
-		trace("S: " + connectingLoader.data);
+		Net.traceFunction("S", String(connectingLoader.data));
 		loginData.push((new XML(connectingLoader.data)).features[0]);
 		status = ChannelStatus.CONNECTED;
 		if (loginUserName) // login() was called but we couldn't start that time
@@ -280,7 +280,7 @@ public class HTTPBinding extends Channel
 	
 	private function urlLoader_completeHandler(event:Event):void
 	{
-		trace("S: " + StringUtil.trim(urlLoader.data));
+		Net.traceFunction("S", StringUtil.trim(urlLoader.data));
 
 		var xml:XML = new XML(urlLoader.data);
 		if (status == ChannelStatus.LOGGING_IN)
@@ -330,7 +330,7 @@ public class HTTPBinding extends Channel
 	
 	private function urlLoader_errorHandler(event:ErrorEvent):void
 	{
-		trace("S: Error: " + event.text);
+		Net.traceFunction("S", "Error: " + event.text);
 		if (loggingIn)
 			loggingIn = false;
 		urlLoaderWorking = false;
@@ -343,7 +343,7 @@ public class HTTPBinding extends Channel
 	{
 		if (status != ChannelStatus.RELAX)
 		{
-			trace("S: " + asyncLoader.data);
+			Net.traceFunction("S", String(asyncLoader.data));
 			var xml:XML = new XML(asyncLoader.data);
 			if (xml.children().length() > 0)
 			{
@@ -366,7 +366,7 @@ public class HTTPBinding extends Channel
 	{
 		if (status != ChannelStatus.RELAX)
 		{
-			trace("S: Error: " + event.text);
+			Net.traceFunction("S", "Error: " + event.text);
 			var timer:Timer = new Timer(3000, 1);
 			timer.addEventListener(TimerEvent.TIMER, 
 				function(... args):void { callAsync(); });

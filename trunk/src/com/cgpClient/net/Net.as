@@ -171,6 +171,16 @@ public class Net
 	}
 
 	//--------------------------------------
+	//  trace
+	//--------------------------------------
+
+	/**
+	 *  Tracing info handler. Default value is <code>trace()</code>, but it 
+	 *  can be any function with signature <code>function(type:String, message:String):void</code>
+	 */
+	public static var traceFunction:Function = trace;
+
+	//--------------------------------------
 	//  loginData
 	//--------------------------------------
 
@@ -284,20 +294,6 @@ public class Net
 		{
 			keepAliveTimer.stop();	
 		}
-	}
-
-	//--------------------------------------------------------------------------
-	//
-	//  Constructor
-	//
-	//--------------------------------------------------------------------------
-
-	/**
-	 *  @private
-	 */
-	public function Net()
-	{
-		throw new Error("Do not instantiate Net, use static class methods");
 	}
 
 	//--------------------------------------------------------------------------
@@ -611,5 +607,19 @@ public class Net
 		ximss(keepAliveRequest, null, keepAliveResponseCallback); 
 	}
 	
+	//--------------------------------------------------------------------------
+	//
+	//  Constructor
+	//
+	//--------------------------------------------------------------------------
+
+	/**
+	 *  @private
+	 */
+	public function Net()
+	{
+		throw new Error("Do not instantiate Net, use static class methods");
+	}
+
 }
 }
