@@ -26,6 +26,8 @@ import com.cgpClient.net.NetStatus;
 import com.cgpClient.net.getErrorText;
 
 import mx.collections.ArrayCollection;
+import mx.collections.Sort;
+import mx.collections.SortField;
 
 /**
  *  This class manages mailboxes list and folders list. Use it to read that 
@@ -35,7 +37,7 @@ import mx.collections.ArrayCollection;
 public class MailboxManager
 {
 	
-	private static var _mailboxes:ArrayCollection = new ArrayCollection();
+	private static var _mailboxes:ArrayCollection;
 	
 	/**
 	 *  List of user mailboxes. To modify this collection use XIMSS requests,
@@ -73,6 +75,14 @@ public class MailboxManager
 		
 		if (_enabled)
 		{
+			if (!_mailboxes)
+			{
+				_mailboxes = new ArrayCollection();
+				var sort:Sort = new Sort();
+				sort.fields = [ new SortField("mailbox") ];
+				_mailboxes.sort = sort;
+				_mailboxes.refresh();
+			}
 			Net.watch(ximssCallback, dataCallback, responseCallback, asyncCallback);
 			Net.dispatcher.addEventListener(NetEvent.STATUS, statusHandler);
 		}
@@ -94,7 +104,7 @@ public class MailboxManager
 		for (var i:int = 0; i < n; i++)
 		{
 			var mailbox:Mailbox = Mailbox(_mailboxes.getItemAt(i));
-			if (mailbox.name == name)
+			if (mailbox.mailbox == name)
 				return mailbox;
 		}
 		return null;
@@ -150,7 +160,7 @@ public class MailboxManager
 				if (!mailbox)
 				{
 					mailbox = new Mailbox();
-					mailbox.name = originalXML.@mailbox;
+					mailbox.mailbox = originalXML.@mailbox;
 					mailbox.mailboxClass = originalXML.@mailboxClass;
 					_mailboxes.addItem(mailbox);
 				}
@@ -194,7 +204,7 @@ public class MailboxManager
 		if (name == "mailboxCreate")
 		{
 			mailbox = new Mailbox();
-			mailbox.name = originalXML.@mailbox;
+			mailbox.mailbox = originalXML.@mailbox;
 			if (originalXML.hasOwnProperty("@mailboxClass"))
 				mailbox.mailboxClass = originalXML.@mailboxClass;
 			_mailboxes.addItem(mailbox);
@@ -204,17 +214,17 @@ public class MailboxManager
 			mailbox = getMailbox(originalXML.@mailbox);
 			if (!mailbox)
 				throw new Error("mailbox renaming was watched, but initial mailbox is not found");
-			var previousName:String = mailbox.name;
+			var previousName:String = mailbox.mailbox;
 			var newName:String = originalXML.@newName;
-			mailbox.name = newName;
+			mailbox.mailbox = newName;
 			if (originalXML.hasOwnProperty("@children")) // rename all children
 			{
 				var n:int = _mailboxes.length;
 				for (var i:int = 0; i < n; i++)
 				{
 					mailbox = Mailbox(_mailboxes.getItemAt(i));
-					if (mailbox.name.indexOf(previousName + "/") == 0)
-						mailbox.name = mailbox.name.substr(previousName.length + 1) + newName; 
+					if (mailbox.mailbox.indexOf(previousName + "/") == 0)
+						mailbox.mailbox = mailbox.mailbox.substr(previousName.length + 1) + newName; 
 				}
 			}
 		}
@@ -232,7 +242,7 @@ public class MailboxManager
 			if (!mailbox) // request is successful - mailboxClass is defined and mailbox is created
 			{
 				mailbox = new Mailbox();
-				mailbox.name = originalXML.@mailbox;
+				mailbox.mailbox = originalXML.@mailbox;
 				mailbox.mailboxClass = originalXML.@mailboxClass;
 			} 
 		}

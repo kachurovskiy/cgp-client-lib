@@ -35,7 +35,15 @@ import mx.collections.ArrayCollection;
 public class Mailbox extends EventDispatcher
 {
 	
-	public var name:String;
+	public function Mailbox(xml:XML = null)
+	{
+		super();
+		
+		if (xml)
+			update(xml);
+	}
+	
+	public var mailbox:String;
 	
 	/**
 	 *  Some int like 306169346. Who knows what's that?
@@ -88,17 +96,9 @@ public class Mailbox extends EventDispatcher
 		return _folders;
 	}
 	
-	public function Mailbox(xml:XML = null)
-	{
-		super();
-		
-		if (xml)
-			update(xml);
-	}
-	
 	public function update(xml:XML):void
 	{
-		name = xml.@mailbox;
+		mailbox = xml.@mailbox;
 		uidValidity = int(xml.@UIDValidity);
 		messages = int(xml.@messages);
 		uidNext = xml.@UIDNext;
@@ -106,7 +106,6 @@ public class Mailbox extends EventDispatcher
 		oldest = new Date(); // TODO: parse from xml.@oldest like 20081130083551
 		mailboxClass = xml.hasOwnProperty("@Class") ? xml.@Class : null;
 		media = xml.hasOwnProperty("@Media") ? xml.@Media : 0;
-		unseenMedia = xml.hasOwnProperty("@UnseenMedia") ? xml.@UnseenMedia : 0;
 		unseenMedia = xml.hasOwnProperty("@UnseenMedia") ? xml.@UnseenMedia : 0;
 		size = int(xml.@size);
 		pureFolder = xml.hasOwnProperty("@pureFolder") ? xml.@pureFolder == "yes" : false;
