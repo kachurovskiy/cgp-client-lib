@@ -161,7 +161,7 @@ public class Folder extends EventDispatcher
 	
 	public function getFolderOpen():XML
 	{
-		var xml:XML = <folderOpen folder={name} mailbox={mailbox.name}
+		var xml:XML = <folderOpen folder={name} mailbox={mailbox.mailbox}
 			sortField={sortField} sortOrder={sortOrder} />;
 		if (filter)
 			xml.@filter = filter;
