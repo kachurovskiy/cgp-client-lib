@@ -190,6 +190,29 @@ public class MailboxManager
 					xml.@folder + "\" is not found");
 			folder.update(xml);
 		}
+		else if (name == "mailboxSubscription")
+		{
+			mailboxName = xml.@mailbox;
+			mailbox = getMailbox(mailboxName);
+			if (!mailbox)
+			{
+				mailbox = new Mailbox();
+				mailbox.mailbox = mailboxName;
+				_mailboxes.addItem(mailbox);
+			}
+		}
+		else if (name == "mailboxRights")
+		{
+			mailboxName = xml.@mailbox;
+			mailbox = getMailbox(mailboxName);
+			if (!mailbox)
+			{
+				mailbox = new Mailbox();
+				mailbox.mailbox = mailboxName;
+				_mailboxes.addItem(mailbox);
+			}
+			mailbox.rights = xml.toString();
+		}
 	}
 	
 	private static function responseCallback(object:Object, originalXML:XML):void
