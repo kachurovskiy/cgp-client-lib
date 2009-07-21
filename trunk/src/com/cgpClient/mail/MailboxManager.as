@@ -136,6 +136,11 @@ public class MailboxManager
 		if (name == "mailbox")
 		{
 			mailboxName = xml.@mailbox;
+			// is it's a mailbox from other account - do not add it here
+			// it will be added on mailboxSubscription data
+			if (mailboxName.charAt(0) == "~")
+				return;
+				
 			mailbox = getMailbox(mailboxName);
 			if (!mailbox)
 			{
@@ -277,6 +282,25 @@ public class MailboxManager
 					originalXML.@folder + "\" is not found");
 			folder.open = false;
 			_folders.removeItemAt(_folders.getItemIndex(folder)); // index is ok
+		}
+		else if (name == "mailboxSubUpdate")
+		{
+			for each (var node:XML in originalXML.mailboxSubscription)
+			{
+				var mailboxString:String = node.@mailbox;
+				var mode:String = node.@mode;
+				mailbox = getMailbox(mailboxString);
+				if (mode == "add" && !mailbox)
+				{
+					mailbox = new Mailbox();
+					mailbox.mailbox = mailboxString;
+					_mailboxes.addItem(mailbox);
+				}
+				else if (mode != "add" && mailbox)
+				{
+					_mailboxes.removeItemAt(_mailboxes.getItemIndex(mailbox));
+				}
+			}
 		}
 	}
 	
