@@ -64,6 +64,7 @@ public class HTTPBinding extends Channel
 	private var ackSeq:int;
 	
 	private var asyncBase:String;
+	private var asyncErrorCount:int = 0;
 	
 	private var loginId:String;
 	
@@ -341,6 +342,7 @@ public class HTTPBinding extends Channel
 	
 	private function asyncLoader_completeHandler(event:Event):void
 	{
+		asyncErrorCount = 0;
 		if (status != ChannelStatus.RELAX)
 		{
 			Net.traceFunction("S", String(asyncLoader.data));
@@ -366,11 +368,20 @@ public class HTTPBinding extends Channel
 	{
 		if (status != ChannelStatus.RELAX)
 		{
-			Net.traceFunction("S", "Error: " + event.text);
-			var timer:Timer = new Timer(3000, 1);
-			timer.addEventListener(TimerEvent.TIMER, 
-				function(... args):void { callAsync(); });
-			timer.start();
+			asyncErrorCount++;
+			if (asyncErrorCount < 3)
+			{
+				Net.traceFunction("S", "Error: " + event.text);
+				var timer:Timer = new Timer(3000, 1);
+				timer.addEventListener(TimerEvent.TIMER, 
+					function(... args):void { callAsync(); });
+				timer.start();
+			}
+			else
+			{
+				asyncErrorCount = 0;
+				status = ChannelStatus.RELAX;
+			}
 		}
 	}
 	

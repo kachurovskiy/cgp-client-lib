@@ -338,6 +338,8 @@ public class Net
 		
 		setStatus(NetStatus.LOGGING_IN);
 		
+		if (channel.status == ChannelStatus.RELAX)
+			channel.connect();
 		channel.login(loginUserName, password);
 	}
 
@@ -528,9 +530,9 @@ public class Net
 			(newStatus == ChannelStatus.RELAX &&
 			event.oldStatus == ChannelStatus.LOGGED_IN))
 		{
-			setStatus(newStatus);
 			if (newStatus == ChannelStatus.RELAX) // user logged out
 				channel = null;
+			setStatus(newStatus);
 		}
 		// login error - connection / login-password problem
 		else if (newStatus == ChannelStatus.RELAX && event.text) 
@@ -544,7 +546,7 @@ public class Net
 			if (event.oldStatus != ChannelStatus.CONNECTING || !_channel)
 			{
 				channel = null;
-				statusError = new Error(event.text);
+				statusError = new Error("Can not connect to the server. \nDetails: " + event.text);
 				setStatus(NetStatus.RELAX);
 			}
 		}
