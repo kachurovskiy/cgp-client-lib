@@ -245,7 +245,6 @@ public class XIMSSSocket extends Channel
 		else
 			throw new Error("What's that? Error: " + object);
 		
-		var previousStatus:String = status;
 		statusError = text;
 		status = ChannelStatus.RELAX;
 	}
