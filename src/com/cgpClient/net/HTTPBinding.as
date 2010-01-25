@@ -1,4 +1,4 @@
-/* Copyright (c) 2009 Maxim Kachurovskiy
+/* Copyright (c) 2010 Maxim Kachurovskiy
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -49,6 +49,17 @@ public class HTTPBinding extends Channel
 	//
 	//--------------------------------------------------------------------------
 	
+	private var secure:Boolean;
+	/**
+	 *  Defined by <code>secure</code>. "http://" for false, "https://" for true.
+	 */
+	private var protocol:String;
+	/**
+	 *  String that is used for port. Can be ":123" (with any number) or "" if
+	 *  port is default (80 for non-secure and 443 for secure).
+	 */
+	private var effectivePort:String;
+	
 	private var connectingLoader:URLLoader;
 	
 	private var urlLoader:URLLoader;
@@ -81,9 +92,27 @@ public class HTTPBinding extends Channel
 	//
 	//--------------------------------------------------------------------------
 	
-	public function HTTPBinding(host:String, port:int)
+	public function HTTPBinding(secure:Boolean, host:String, port:int)
 	{
 		super(host, port);
+		
+		init(secure);
+	}
+	
+	//--------------------------------------------------------------------------
+	//
+	//  Overriden methods
+	//
+	//--------------------------------------------------------------------------
+	
+	private function init(secure:Boolean):void
+	{
+		this.secure = secure;
+		protocol = secure ? "https://" : "http://";
+		if (secure && port == 443 || !secure && port == 80)
+			effectivePort = "";
+		else
+			effectivePort = port.toString();
 		
 		asyncLoaderRequest = new URLRequest();
 		asyncLoaderRequest.method = URLRequestMethod.GET;
@@ -95,12 +124,6 @@ public class HTTPBinding extends Channel
 		asyncLoader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, 
 			asyncLoader_errorHandler);
 	}
-	
-	//--------------------------------------------------------------------------
-	//
-	//  Overriden methods
-	//
-	//--------------------------------------------------------------------------
 	
 	override public function connect():void
 	{
@@ -213,7 +236,7 @@ public class HTTPBinding extends Channel
 		status = ChannelStatus.LOGGING_IN;
 		
 		prepareLoader();
-		var url:String = "http://" + host + (port == 80 ? "" : ":" + port)  + "/ximsslogin/";
+		var url:String = protocol + host + effectivePort  + "/ximsslogin/";
 		var urlRequest:URLRequest = new URLRequest(url);
 		var urlVariables:URLVariables = new URLVariables();
 		
@@ -235,7 +258,7 @@ public class HTTPBinding extends Channel
 	
 	private function getURLRequest(xml:String):URLRequest
 	{
-		var url:String = "http://" + host + (port == 80 ? "" : ":" + port);
+		var url:String = protocol + host + effectivePort;
 		var urlRequest:URLRequest;
 		
 		if (!sessionId)
@@ -297,7 +320,7 @@ public class HTTPBinding extends Channel
 			{
 				ackSeq = 0;
 				sessionId = xml.session.@urlID; 
-				asyncBase = "http://" + host + (port == 80 ? "" : ":" + port) + "/Session/" + 
+				asyncBase = protocol + host + effectivePort + "/Session/" + 
 					sessionId + "/get?maxWait=60&ackSeq=";
 				callAsync();
 				loginData.push(xml.session[0]);
