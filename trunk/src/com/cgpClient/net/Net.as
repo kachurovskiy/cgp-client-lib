@@ -1,4 +1,4 @@
-/* Copyright (c) 2009 Maxim Kachurovskiy
+/* Copyright (c) 2010 Maxim Kachurovskiy
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -312,12 +312,12 @@ public class Net
 	 *  or <code>mary&#64;myserver.com</code>
 	 *  @param thePassword Password in plain text
 	 *  @param theFailoverScheme Channels that should be used to establish 
-	 *  connection. Available channels are "socket" and "binding". <p>
+	 *  connection. Available channels are "socket", "binding" and "sbinding". <p>
 	 *  <strong>Note:</strong> only AIR applications can connect to ports less than 1024.</p>
 	 */
 	public static function login(theHost:String, theLoginUserName:String, 
 		thePassword:String, theFailoverScheme:String = 
-		"socket 80, socket 11024, binding 80, binding 8100"):void
+		"socket 80, socket 11024, binding 80, binding 8100, sbinding 443"):void
 	{
 		if (status != NetStatus.RELAX)
 			throw new Error("login() can be called with status == " + 
@@ -503,8 +503,8 @@ public class Net
 				throw error;
 			if (type == "socket")
 				channel = new XIMSSSocket(host, port);
-			else if (type == "binding")
-				channel = new HTTPBinding(host, port);
+			else if (type == "binding" || type == "sbinding")
+				channel = new HTTPBinding(type == "sbinding", host, port);
 			else
 				throw error;
 			failoverIndex++;

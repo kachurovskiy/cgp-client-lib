@@ -1,6 +1,6 @@
 CGPLibrary licence:
 
-  Copyright (c) 2009 Maxim Kachurovskiy
+  Copyright (c) 2010 Maxim Kachurovskiy
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
