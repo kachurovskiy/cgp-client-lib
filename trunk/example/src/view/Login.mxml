@@ -41,14 +41,14 @@
 		
 		<mx:FormItem label="User Name">
 			
-			<mx:TextInput id="userNameInput" text="cgpclient1"
+			<mx:TextInput id="userNameInput" text="demo"
 				enter="if (loginButton.enabled) login();"/>
 			
 		</mx:FormItem>
 		
 		<mx:FormItem label="Password">
 			
-			<mx:TextInput id="passwordInput" text="123456" displayAsPassword="true"
+			<mx:TextInput id="passwordInput" text="demo" displayAsPassword="true"
 				toolTip="Ts-s, it's 123456 for cgpclient1" 
 				enter="if (loginButton.enabled) login();"/>
 			
@@ -56,7 +56,7 @@
 		
 		<mx:FormItem label="Host">
 			
-			<mx:TextInput id="hostInput" text="talktoip.com"
+			<mx:TextInput id="hostInput" text="test.moscow.stalker.com"
 				enter="if (loginButton.enabled) login();"/>
 			
 		</mx:FormItem>
