@@ -53,6 +53,10 @@ Possible values of `newStatus` and `oldStatus` are specified in `NetStatus` clas
   * `LOGGING_IN:String = "loggingIn"`
   * `LOGGED_IN:String = "loggedIn"`
 
+== `Net.status:String` ==
+
+Current connection status. Possible values are specified in `NetStatus` class.
+
 == `Net.loginData:Array` ==
 
 Array of `XML`-s that were received during login process. Can be used for example to determine session id.
