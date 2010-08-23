@@ -73,6 +73,7 @@ public class HTTPBinding extends Channel
 	private var asyncLoaderRequest:URLRequest;
 	
 	private var ackSeq:int;
+	private var asyncLoaderCounter:int = 0;
 	
 	private var asyncBase:String;
 	private var asyncErrorCount:int = 0;
@@ -276,7 +277,7 @@ public class HTTPBinding extends Channel
 	
 	private function callAsync():void
 	{
-		asyncLoaderRequest.url = asyncBase + ackSeq;
+		asyncLoaderRequest.url = asyncBase + ackSeq + "&counter=" + asyncLoaderCounter++;
 		Net.traceFunction("C", "asyncLoader: " + asyncLoaderRequest.url + " | " + asyncLoaderRequest.data);
 		asyncLoader.load(asyncLoaderRequest);
 	}
@@ -383,7 +384,9 @@ public class HTTPBinding extends Channel
 				}
 				ackSeq++;
 			}
-			callAsync();
+			
+			if (!bying)
+				callAsync();
 		}
 	}
 	
